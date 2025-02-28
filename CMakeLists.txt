@@ -1,0 +1,58 @@
+cmake_minimum_required(VERSION 3.14 FATAL_ERROR)
+
+project(CUnit)
+
+option(CUNIT_BUILD_EXAMPLE "build example program" OFF)
+option(CUNIT_BUILD_SHARED "build shared library" OFF)
+option(CUNIT_BUILD_STATIC "build static library" OFF)
+
+include(cmake/ProjectConfig.cmake)
+message(STATUS "CUnit version: ${PROJECT_VERSION}")
+
+add_library(cunit_obj OBJECT src/cunit.c)
+add_library(cunit::obj ALIAS cunit_obj)
+target_include_directories(cunit_obj PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
+
+if(MSVC)
+    string(REPLACE "/" "\\\\" CUNIT_ROOT_PATH ${CMAKE_SOURCE_DIR})
+else()
+    set(CUNIT_ROOT_PATH ${CMAKE_SOURCE_DIR})
+endif()
+target_compile_definitions(cunit_obj PRIVATE
+    CUNIT_ROOT_PATH="${CUNIT_ROOT_PATH}"
+)
+
+if(CUNIT_BUILD_SHARED)
+    add_library(cunit_shared SHARED $<TARGET_OBJECTS:cunit_obj>)
+    add_library(cunit::shared ALIAS cunit_shared)
+    target_include_directories(cunit_shared PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
+    set_target_properties(cunit_shared PROPERTIES OUTPUT_NAME cunit)
+    if(NOT TARGET cunit::cunit)
+        add_library(cunit::cunit ALIAS cunit_shared)
+    endif()
+    message(STATUS "CUnit build shared library: ON")
+else()
+    message(STATUS "CUnit build shared library: OFF")
+endif()
+
+if(CUNIT_BUILD_STATIC)
+    add_library(cunit_static STATIC $<TARGET_OBJECTS:cunit_obj>)
+    add_library(cunit::static ALIAS cunit_static)
+    target_include_directories(cunit_static PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
+    set_target_properties(cunit_static PROPERTIES OUTPUT_NAME cunit)
+    if(NOT TARGET cunit::cunit)
+        add_library(cunit::cunit ALIAS cunit_static)
+    endif()
+    message(STATUS "CUnit build static library: ON")
+else()
+    message(STATUS "CUnit build static library: OFF")
+endif()
+
+if(NOT TARGET cunit::cunit)
+    add_library(cunit::cunit ALIAS cunit_obj)
+endif()
+
+if(CUNIT_BUILD_EXAMPLE)
+    enable_testing()
+    add_subdirectory(example)
+endif()

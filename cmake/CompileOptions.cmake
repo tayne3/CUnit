@@ -1,0 +1,49 @@
+if(CUNIT_BUILD_DEBUG)
+    add_definitions(-DDEBUG)
+else()
+    add_definitions(-DNDEBUG)
+endif()
+
+if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
+    add_compile_options(
+        -Wall
+        -Wextra
+        -Wstrict-aliasing
+        -Wstrict-prototypes
+        -Wshadow
+        -Wundef
+        -Wunused
+        -Wunused-parameter
+        -Wmissing-declarations
+        -Wmissing-prototypes
+        -Wformat
+        -Wpointer-arith
+        -Wcast-qual
+        -Wuninitialized
+        -fPIC
+    )
+elseif(CMAKE_SYSTEM_NAME STREQUAL "Windows")
+    if(MSVC)
+        add_compile_options(
+            /source-charset:utf-8
+        )
+    else()
+        add_compile_options(
+            -Wall
+            -Wextra
+            -Wstrict-aliasing
+            -Wstrict-prototypes
+            -Wshadow
+            -Wundef
+            -Wunused
+            -Wunused-parameter
+            -Wmissing-declarations
+            -Wmissing-prototypes
+            -Wformat
+            -Wpointer-arith
+            -Wcast-qual
+            -Wuninitialized
+            -fPIC
+        )
+    endif()
+endif()
