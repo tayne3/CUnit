@@ -35,30 +35,10 @@ add_library(mylib SHARED mylib.c)
 include(FetchContent)
 FetchContent_Declare(
   CUnit
-  GIT_REPOSITORY https://github.com/tayne3/cunit.git
+  GIT_REPOSITORY https://github.com/tayne3/CUnit.git
   GIT_TAG v1.0.0
 )
 FetchContent_MakeAvailable(CUnit)
-
-enable_testing()
-add_executable(MyTest main_test.c)
-target_link_libraries(MyTest mylib cunit::cunit)
-add_test(NAME MyTest COMMAND MyTest)
-set_tests_properties(MyTest PROPERTIES FAIL_REGULAR_EXPRESSION "failed|error")
-```
-
-- **使用 CPM 依赖管理**:
-
-CPM 是一个 CMake 的依赖管理工具，您可以使用 CPM 将 CUnit 作为依赖集成到您的项目中：
-
-```cmake
-cmake_minimum_required(VERSION 3.14 FATAL_ERROR)
-
-project(MyLibrary)
-add_library(mylib SHARED mylib.c)
-
-include(cmake/CPM.cmake)
-CPMAddPackage("https://github.com/tayne3/cunit.git#1.0.0")
 
 enable_testing()
 add_executable(MyTest main_test.c)

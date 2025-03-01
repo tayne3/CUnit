@@ -36,6 +36,15 @@
 #define cunit_root_path STR_NULL
 #endif
 
+#ifdef _MSC_VER
+#define strcasecmp  stricmp
+#define strncasecmp strnicmp
+#else
+#include <strings.h>
+#define stricmp  strcasecmp
+#define strnicmp strncasecmp
+#endif
+
 // comparison results: greater than, less than, and equal to
 enum cunit_compare_result {
 	CUnitCompare_Unknown = -2,
@@ -47,7 +56,8 @@ enum cunit_compare_result {
 #define CUNIT_COMPARE_RESULT_TO_STR(x) \
 	((x) == CUnitCompare_Less ? "<" : (x) == CUnitCompare_Equal ? "=" : (x) == CUnitCompare_Greater ? ">" : "?")
 
-#define __cunit_print_check(ctx) printf("\033[33;2m%s:%d CHECK \033[0m", __cunit_relative(ctx.file), ctx.line)
+#define __cunit_print_not_expected(ctx) \
+	printf("\033[33;2m%s:%d not expected: \033[0m", __cunit_relative(ctx.file), ctx.line)
 
 #define __cunit_print_info(format)                                                   \
 	do {                                                                             \
@@ -61,6 +71,7 @@ enum cunit_compare_result {
 	} while (0)
 
 #define CUNIT_STRCMP(l, r)        (l == r ? 0 : !l ? -1 : !r ? 1 : strcmp(l, r))
+#define CUNIT_STRCASECMP(l, r)    (l == r ? 0 : !l ? -1 : !r ? 1 : strcasecmp(l, r))
 #define CUNIT_STRNCMP(l, r, size) (l == r ? 0 : !l ? -1 : !r ? 1 : strncmp(l, r, size))
 
 /**
@@ -189,26 +200,6 @@ void cunit_any_swap(cunit_any_t *l, cunit_any_t *r) {
 	l->type ^= r->type;
 }
 
-bool __cunit_check_hex(const cunit_context_t ctx, const uint8_t *l, const uint8_t *r, size_t size, const char *format,
-					   ...) {
-	if (l == r) {
-		return true;
-	}
-	if (l && r && !__cunit_bytearray_compare(l, r, size)) {
-		return true;
-	}
-
-	__cunit_print_check(ctx);
-	printf("`");
-	__cunit_print_hex(l, size);
-	printf("` != `");
-	__cunit_print_hex(r, size);
-	printf("` " STR_NEWLINE);
-
-	__cunit_print_info(format);
-	return false;
-}
-
 bool __cunit_check_string(const cunit_context_t ctx, const char *l, const char *r, const char *format, ...) {
 	if (l == r) {
 		return true;
@@ -217,9 +208,8 @@ bool __cunit_check_string(const cunit_context_t ctx, const char *l, const char *
 		return true;
 	}
 
-	__cunit_print_check(ctx);
+	__cunit_print_not_expected(ctx);
 	printf("%s != %s" STR_NEWLINE, l, r);
-
 	__cunit_print_info(format);
 	return false;
 }
@@ -233,9 +223,41 @@ bool __cunit_check_string_n(const cunit_context_t ctx, const char *l, const char
 		return true;
 	}
 
-	__cunit_print_check(ctx);
+	__cunit_print_not_expected(ctx);
 	printf("%s != %s" STR_NEWLINE, l, r);
+	__cunit_print_info(format);
+	return false;
+}
 
+bool __cunit_check_string_case(const cunit_context_t ctx, const char *l, const char *r, const char *format, ...) {
+	if (l == r) {
+		return true;
+	}
+	if (l && r && !CUNIT_STRCASECMP(l, r)) {
+		return true;
+	}
+
+	__cunit_print_not_expected(ctx);
+	printf("%s !≈ %s" STR_NEWLINE, l, r);
+	__cunit_print_info(format);
+	return false;
+}
+
+bool __cunit_check_string_hex(const cunit_context_t ctx, const uint8_t *l, const uint8_t *r, size_t size,
+							  const char *format, ...) {
+	if (l == r) {
+		return true;
+	}
+	if (l && r && !__cunit_bytearray_compare(l, r, size)) {
+		return true;
+	}
+
+	__cunit_print_not_expected(ctx);
+	printf("`");
+	__cunit_print_hex(l, size);
+	printf("` != `");
+	__cunit_print_hex(r, size);
+	printf("` " STR_NEWLINE);
 	__cunit_print_info(format);
 	return false;
 }
@@ -245,9 +267,8 @@ bool __cunit_check_null(const cunit_context_t ctx, const void *p, const char *fo
 		return true;
 	}
 
-	__cunit_print_check(ctx);
+	__cunit_print_not_expected(ctx);
 	printf("%p is not null" STR_NEWLINE, p);
-
 	__cunit_print_info(format);
 	return false;
 }
@@ -257,9 +278,8 @@ bool __cunit_check_not_null(const cunit_context_t ctx, const void *p, const char
 		return true;
 	}
 
-	__cunit_print_check(ctx);
+	__cunit_print_not_expected(ctx);
 	printf("(null) is null" STR_NEWLINE);
-
 	__cunit_print_info(format);
 	return false;
 }
@@ -287,12 +307,11 @@ bool __cunit_check_any_compare(const cunit_context_t ctx, const cunit_any_t l, c
 		default: break;
 	}
 
-	__cunit_print_check(ctx);
+	__cunit_print_not_expected(ctx);
 	cunit_any_print(&l);
 	printf(" %s ", CUNIT_COMPARE_RESULT_TO_STR(ret));
 	cunit_any_print(&r);
 	printf(STR_NEWLINE);
-
 	__cunit_print_info(format);
 	return false;
 }
@@ -303,10 +322,9 @@ bool __cunit_check_any_in_array(const cunit_context_t ctx, const cunit_any_t var
 		return true;
 	}
 
-	__cunit_print_check(ctx);
+	__cunit_print_not_expected(ctx);
 	cunit_any_print(&var);
 	printf(" is not in array" STR_NEWLINE);
-
 	__cunit_print_info(format);
 	return false;
 }
@@ -317,10 +335,9 @@ bool __cunit_check_any_not_in_array(const cunit_context_t ctx, const cunit_any_t
 		return true;
 	}
 
-	__cunit_print_check(ctx);
+	__cunit_print_not_expected(ctx);
 	cunit_any_print(&var);
 	printf(" is in array" STR_NEWLINE);
-
 	__cunit_print_info(format);
 	return false;
 }
@@ -330,9 +347,8 @@ bool __cunit_check_ret(const cunit_context_t ctx, int ret, const char *format, .
 		return true;
 	}
 
-	__cunit_print_check(ctx);
+	__cunit_print_not_expected(ctx);
 	printf("return value is %d" STR_NEWLINE, ret);
-
 	__cunit_print_info(format);
 	return false;
 }

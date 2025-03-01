@@ -985,9 +985,18 @@ typedef struct cunit_context {
 		}                                                           \
 	} while (0)
 
-#define cunit_check_string_hex(__l, __r, __size, ...)                                                   \
-	__cunit_check_hex(CUNIT_CTX_CURR, (const uint8_t *)(__l), (const uint8_t *)(__r), (size_t)(__size), \
-					  STR_NULL __VA_ARGS__)
+#define cunit_check_string_case(__l, __r, ...) \
+	__cunit_check_string_case(CUNIT_CTX_CURR, (const char *)(__l), (const char *)(__r), STR_NULL __VA_ARGS__)
+#define cunit_assert_string_case(__l, __r, ...)                \
+	do {                                                       \
+		if (!cunit_check_string_case(__l, __r, __VA_ARGS__)) { \
+			cunit_fatal();                                     \
+		}                                                      \
+	} while (0)
+
+#define cunit_check_string_hex(__l, __r, __size, ...)                                                          \
+	__cunit_check_string_hex(CUNIT_CTX_CURR, (const uint8_t *)(__l), (const uint8_t *)(__r), (size_t)(__size), \
+							 STR_NULL __VA_ARGS__)
 #define cunit_assert_string_hex(__l, __r, __size, ...)                \
 	do {                                                              \
 		if (!cunit_check_string_hex(__l, __r, __size, __VA_ARGS__)) { \
@@ -1431,8 +1440,14 @@ typedef struct cunit_context {
 #define cunit_check_string_n(...)  ___cunit_check_string_n(__VA_ARGS__, STR_NULL)
 #define cunit_assert_string_n(...) ___cunit_assert_check(cunit_check_string_n, __VA_ARGS__)
 
-#define ___cunit_check_string_hex(__l, __r, __size, ...) \
-	__cunit_check_hex(CUNIT_CTX_CURR, (const uint8_t *)(__l), (const uint8_t *)(__r), (size_t)(__size), __VA_ARGS__)
+#define ___cunit_check_string_case(__l, __r, ...) \
+	__cunit_check_string_case(CUNIT_CTX_CURR, (const char *)(__l), (const char *)(__r), __VA_ARGS__)
+#define cunit_check_string_case(...)  ___cunit_check_string_case(__VA_ARGS__, STR_NULL)
+#define cunit_assert_string_case(...) ___cunit_assert_check(cunit_check_string_case, __VA_ARGS__)
+
+#define ___cunit_check_string_hex(__l, __r, __size, ...)                                                       \
+	__cunit_check_string_hex(CUNIT_CTX_CURR, (const uint8_t *)(__l), (const uint8_t *)(__r), (size_t)(__size), \
+							 __VA_ARGS__)
 #define cunit_check_string_hex(...)  ___cunit_check_string_hex(__VA_ARGS__, STR_NULL)
 #define cunit_assert_string_hex(...) ___cunit_assert_check(cunit_check_string_hex, __VA_ARGS__)
 
@@ -1457,6 +1472,8 @@ typedef struct cunit_context {
 #define cunit_assert_not_in_array(...) ___cunit_assert_check(cunit_check_not_in_array, __VA_ARGS__)
 
 #endif
+
+// -------------------------[cunit aliases]-------------------------
 
 #define cunit_print(...)                                                                     \
 	do {                                                                                     \
@@ -1680,34 +1697,39 @@ typedef struct cunit_context {
 #define check_pointer_eq cunit_check_pointer_equal
 #define check_pointer_ne cunit_check_pointer_not_equal
 
-#define assert_null cunit_assert_null
+#define assert_null     cunit_assert_null
 #define assert_not_null cunit_assert_not_null
 
-#define check_null cunit_check_null
+#define check_null     cunit_check_null
 #define check_not_null cunit_check_not_null
 
 #define assert_string     cunit_assert_string
 #define assert_string_n   cunit_assert_string_n
+#define assert_string_case cunit_assert_string_case
 #define assert_string_hex cunit_assert_string_hex
 
 #define check_string     cunit_check_string
 #define check_string_n   cunit_check_string_n
+#define check_string_case cunit_check_string_case
 #define check_string_hex cunit_check_string_hex
 
-#define assert_in_array cunit_assert_in_array
+#define assert_in_array     cunit_assert_in_array
 #define assert_not_in_array cunit_assert_not_in_array
 
-#define check_in_array cunit_check_in_array
+#define check_in_array     cunit_check_in_array
 #define check_not_in_array cunit_check_not_in_array
+
+// -------------------------[cunit private functions]-------------------------
 
 const char *__cunit_relative(const char *abs_path);
 void        __cunit_pass(const cunit_context_t ctx);
 void        __cunit_fatal(const cunit_context_t ctx);
-bool __cunit_check_hex(const cunit_context_t ctx, const uint8_t *l, const uint8_t *r, size_t size, const char *format,
-					   ...);
-bool __cunit_check_string(const cunit_context_t ctx, const char *l, const char *r, const char *format, ...);
+bool        __cunit_check_string(const cunit_context_t ctx, const char *l, const char *r, const char *format, ...);
 bool __cunit_check_string_n(const cunit_context_t ctx, const char *l, const char *r, size_t size, const char *format,
 							...);
+bool __cunit_check_string_case(const cunit_context_t ctx, const char *l, const char *r, const char *format, ...);
+bool __cunit_check_string_hex(const cunit_context_t ctx, const uint8_t *l, const uint8_t *r, size_t size,
+							  const char *format, ...);
 bool __cunit_check_null(const cunit_context_t ctx, const void *p, const char *format, ...);
 bool __cunit_check_not_null(const cunit_context_t ctx, const void *p, const char *format, ...);
 bool __cunit_check_any_compare(const cunit_context_t ctx, const cunit_any_t l, const cunit_any_t r, int cond,
