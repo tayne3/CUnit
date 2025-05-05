@@ -21,8 +21,8 @@
  *    OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  *    SOFTWARE.
  */
-#ifndef _CUNIT_H
-#define _CUNIT_H
+#ifndef CUNIT_H
+#define CUNIT_H
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -49,12 +49,10 @@ extern "C" {
 #       define STR_NEWLINE      "\n"
 #   endif
 # endif
-
 // empty string
 # ifndef STR_NULL
 #   define STR_NULL             ""
 # endif
-
 // string is empty
 # ifndef STR_ISEMPTY
 #   define STR_ISEMPTY(_s) 	    (!(_s) || !*(const char *)(_s))
@@ -1477,7 +1475,7 @@ typedef struct cunit_context {
 
 #define cunit_print(...)                                                                     \
 	do {                                                                                     \
-		printf("\033[37;2m%s:%d \033[0m", __cunit_relative(__cunit_file__), __cunit_line__); \
+		printf("\033[37;2m%s:%d\033[0m ", __cunit_relative(__cunit_file__), __cunit_line__); \
 		printf(__VA_ARGS__);                                                                 \
 	} while (0)
 
@@ -1703,15 +1701,15 @@ typedef struct cunit_context {
 #define check_null     cunit_check_null
 #define check_not_null cunit_check_not_null
 
-#define assert_string     cunit_assert_string
-#define assert_string_n   cunit_assert_string_n
+#define assert_string      cunit_assert_string
+#define assert_string_n    cunit_assert_string_n
 #define assert_string_case cunit_assert_string_case
-#define assert_string_hex cunit_assert_string_hex
+#define assert_string_hex  cunit_assert_string_hex
 
-#define check_string     cunit_check_string
-#define check_string_n   cunit_check_string_n
+#define check_string      cunit_check_string
+#define check_string_n    cunit_check_string_n
 #define check_string_case cunit_check_string_case
-#define check_string_hex cunit_check_string_hex
+#define check_string_hex  cunit_check_string_hex
 
 #define assert_in_array     cunit_assert_in_array
 #define assert_not_in_array cunit_assert_not_in_array
@@ -1743,4 +1741,4 @@ bool __cunit_check_ret(const cunit_context_t ctx, int ret, const char *format, .
 #ifdef __cplusplus
 }
 #endif
-#endif  // _CUNIT_H
+#endif  // CUNIT_H

@@ -158,7 +158,7 @@ int main(void) {
 	assert_string_n("hello world", "hello", 5);
 	check_string("hello world", "hello");
 	check_string_case("hello world", "Hello");
-	
+
 	{
 		const unsigned char hex_1[] = {0x01, 0x02, 0x03, 0x04, 0x05};
 		const unsigned char hex_2[] = {0x01, 0x02, 0x03, 0x05, 0x04};

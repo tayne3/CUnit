@@ -1,7 +1,8 @@
-cmake_minimum_required(VERSION 3.14 FATAL_ERROR)
+cmake_minimum_required(VERSION 3.14)
 
 include(cmake/GitVersion.cmake)
-project(CUnit VERSION ${CUNIT_VERSION})
+gitversion_extract(VERSION PROJECT_VERSION DEFAULT_VERSION 0.1.1)
+project(CUnit VERSION ${PROJECT_VERSION})
 
 option(CUNIT_BUILD_EXAMPLE "build example program" OFF)
 option(CUNIT_BUILD_SHARED "build shared library" OFF)

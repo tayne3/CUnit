@@ -1,8 +1,8 @@
 project(example C)
 
-file(GLOB_RECURSE sources_files *.c)
+file(GLOB_RECURSE files *.c)
 
-foreach(test_src ${sources_files})
+foreach(test_src ${files})
     get_filename_component(test_name ${test_src} NAME_WE)
     add_executable(${test_name} ${test_src})
     target_link_libraries(${test_name} cunit::cunit)
