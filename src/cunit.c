@@ -57,12 +57,12 @@ enum cunit_compare_result {
 	((x) == CUnitCompare_Less ? "<" : (x) == CUnitCompare_Equal ? "=" : (x) == CUnitCompare_Greater ? ">" : "?")
 
 #define __cunit_print_not_expected(ctx) \
-	printf("\033[33;2m%s:%d not expected: \033[0m", __cunit_relative(ctx.file), ctx.line)
+	printf("\033[33;2m%s:%d\033[0m not expected: ", __cunit_relative(ctx.file), ctx.line)
 
 #define __cunit_print_info(format)                                                   \
 	do {                                                                             \
 		if (!STR_ISEMPTY(format)) {                                                  \
-			printf("\033[37;2m%s:%d \033[0m", __cunit_relative(ctx.file), ctx.line); \
+			printf("\033[37;2m%s:%d\033[0m ", __cunit_relative(ctx.file), ctx.line); \
 			va_list args;                                                            \
 			va_start(args, format);                                                  \
 			vprintf(format, args);                                                   \
@@ -125,13 +125,13 @@ const char *__cunit_relative(const char *abs_path) {
 }
 
 void __cunit_pass(const cunit_context_t ctx) {
-	printf("\033[32;2m%s:%d \033[0m", __cunit_relative(ctx.file), ctx.line);
+	printf("\033[32;2m%s:%d\033[0m ", __cunit_relative(ctx.file), ctx.line);
 	printf("test passed!" STR_NEWLINE);
 	exit(EXIT_SUCCESS);
 }
 
 void __cunit_fatal(const cunit_context_t ctx) {
-	printf("\033[31;2m%s:%d \033[0m", __cunit_relative(ctx.file), ctx.line);
+	printf("\033[31;2m%s:%d\033[0m ", __cunit_relative(ctx.file), ctx.line);
 	printf("test failed!" STR_NEWLINE);
 	exit(EXIT_FAILURE);
 }

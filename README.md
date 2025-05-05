@@ -44,5 +44,5 @@ enable_testing()
 add_executable(MyTest main_test.c)
 target_link_libraries(MyTest mylib cunit::cunit)
 add_test(NAME MyTest COMMAND MyTest)
-set_tests_properties(MyTest PROPERTIES FAIL_REGULAR_EXPRESSION "failed|error")
+set_tests_properties(MyTest PROPERTIES FAIL_REGULAR_EXPRESSION "failed")
 ```
