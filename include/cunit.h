@@ -1445,7 +1445,7 @@ typedef struct cunit_context {
 
 #define ___cunit_check_string_hex(__l, __r, __size, ...)                                                       \
 	__cunit_check_string_hex(CUNIT_CTX_CURR, (const uint8_t *)(__l), (const uint8_t *)(__r), (size_t)(__size), \
-							 __VA_ARGS__)
+							 STR_NULL __VA_ARGS__)
 #define cunit_check_string_hex(...)  ___cunit_check_string_hex(__VA_ARGS__, STR_NULL)
 #define cunit_assert_string_hex(...) ___cunit_assert_check(cunit_check_string_hex, __VA_ARGS__)
 
@@ -1459,13 +1459,13 @@ typedef struct cunit_context {
 
 #define ___cunit_check_in_array(__v, __type, __array, __size, ...)                                      \
 	__cunit_check_any_in_array(CUNIT_CTX_CURR, CUNIT_ANY_SPECIFY(__v, __type), (const void *)(__array), \
-							   (size_t)(__size), __VA_ARGS__)
+							   (size_t)(__size), STR_NULL __VA_ARGS__)
 #define cunit_check_in_array(...)  ___cunit_check_in_array(__VA_ARGS__, STR_NULL)
 #define cunit_assert_in_array(...) ___cunit_assert_check(cunit_check_in_array, __VA_ARGS__)
 
 #define ___cunit_check_not_in_array(__v, __type, __array, __size, ...)                                      \
 	__cunit_check_any_not_in_array(CUNIT_CTX_CURR, CUNIT_ANY_SPECIFY(__v, __type), (const void *)(__array), \
-								   (size_t)(__size), __VA_ARGS__)
+								   (size_t)(__size), STR_NULL __VA_ARGS__)
 #define cunit_check_not_in_array(...)  ___cunit_check_not_in_array(__VA_ARGS__, STR_NULL)
 #define cunit_assert_not_in_array(...) ___cunit_assert_check(cunit_check_not_in_array, __VA_ARGS__)
 
@@ -1736,7 +1736,6 @@ bool __cunit_check_any_in_array(const cunit_context_t ctx, const cunit_any_t var
 								const char *format, ...);
 bool __cunit_check_any_not_in_array(const cunit_context_t ctx, const cunit_any_t var, const void *array, size_t size,
 									const char *format, ...);
-bool __cunit_check_ret(const cunit_context_t ctx, int ret, const char *format, ...);
 
 #ifdef __cplusplus
 }
