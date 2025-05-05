@@ -339,11 +339,12 @@ _Pvt_Extensions
 *.WK3
 
 # User Shell Script
-.transfer.sh
-.exec.sh
-.gdb.sh
-.test.sh
-.core_dump.sh
+.build_debug.bat
+.build_release.bat
+.run_tests.bat
+.build_debug.sh
+.build_release.sh
+.run_tests.sh
 
 # User Directory
 .discard/
