@@ -131,23 +131,23 @@ int main(void) {
 	assert_string_case("HellO", "hEllo");
 	assert_string_hex("HelloWorld", "Hello", 5);
 
-	cunit_print("print...\n");
+	cunit_println("print...");
 
-	check_bool(true, false, "check bool: true != false\n");
-	check_false(0 == 0, "check true: 0 == 0\n");
-	check_true(0 != 0, "check true: 0 != 0\n");
+	check_bool(true, false, "check bool: true != false");
+	check_false(0 == 0, "check true: 0 == 0");
+	check_true(0 != 0, "check true: 0 != 0");
 
 	if (check_bool(true, true)) {
-		cunit_print("check bool: true == true\n");
+		cunit_println("check bool: true == true");
 	}
 	if (!check_bool(true, false)) {
-		cunit_print("check bool: true != false\n");
+		cunit_println("check bool: true != false");
 	}
 
-	check_char('a', 'b', "check char: 'a' != 'b'\n");
+	check_char('a', 'b', "check char: 'a' != 'b'");
 
 	if (check_char('a', 'a')) {
-		cunit_print("check char: 'a' == 'a'\n");
+		cunit_println("check char: 'a' == 'a'");
 	}
 
 	check_int_eq(0, 0);
