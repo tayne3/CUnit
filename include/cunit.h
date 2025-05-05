@@ -1478,6 +1478,12 @@ typedef struct cunit_context {
 		printf("\033[37;2m%s:%d\033[0m ", __cunit_relative(__cunit_file__), __cunit_line__); \
 		printf(__VA_ARGS__);                                                                 \
 	} while (0)
+#define cunit_println(...)                                                                   \
+	do {                                                                                     \
+		printf("\033[37;2m%s:%d\033[0m ", __cunit_relative(__cunit_file__), __cunit_line__); \
+		printf(__VA_ARGS__);                                                                 \
+		printf(STR_NEWLINE);                                                                 \
+	} while (0)
 
 #define cunit_pass()  __cunit_pass(CUNIT_CTX_CURR)
 #define cunit_fatal() __cunit_fatal(CUNIT_CTX_CURR)

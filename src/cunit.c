@@ -69,6 +69,7 @@ enum cunit_compare_result {
 			va_start(args, format);                                                  \
 			vprintf(format, args);                                                   \
 			va_end(args);                                                            \
+			fputs(STR_NEWLINE, stdout);                                              \
 		}                                                                            \
 	} while (0)
 
@@ -135,13 +136,13 @@ const char *__cunit_relative(const char *abs_path) {
 
 void __cunit_pass(const cunit_context_t ctx) {
 	printf("\033[32;2m%s:%d\033[0m ", __cunit_relative(ctx.file), ctx.line);
-	printf("test passed!" STR_NEWLINE);
+	fputs("test passed!" STR_NEWLINE, stdout);
 	exit(EXIT_SUCCESS);
 }
 
 void __cunit_fatal(const cunit_context_t ctx) {
 	printf("\033[31;2m%s:%d\033[0m ", __cunit_relative(ctx.file), ctx.line);
-	printf("test failed!" STR_NEWLINE);
+	fputs("test failed!" STR_NEWLINE, stdout);
 	exit(EXIT_FAILURE);
 }
 
@@ -262,11 +263,11 @@ bool __cunit_check_string_hex(const cunit_context_t ctx, const uint8_t *l, const
 	}
 
 	__cunit_print_not_expected(ctx);
-	printf("`");
+	fputs("`", stdout);
 	__cunit_print_hex(l, size);
-	printf("` != `");
+	fputs("` != `", stdout);
 	__cunit_print_hex(r, size);
-	printf("` " STR_NEWLINE);
+	fputs("` " STR_NEWLINE, stdout);
 	__cunit_print_info(format);
 	return false;
 }
@@ -288,7 +289,7 @@ bool __cunit_check_not_null(const cunit_context_t ctx, const void *p, const char
 	}
 
 	__cunit_print_not_expected(ctx);
-	printf("(null) is null" STR_NEWLINE);
+	fputs("(null) is null" STR_NEWLINE, stdout);
 	__cunit_print_info(format);
 	return false;
 }
@@ -318,9 +319,11 @@ bool __cunit_check_any_compare(const cunit_context_t ctx, const cunit_any_t l, c
 
 	__cunit_print_not_expected(ctx);
 	cunit_any_print(&l);
-	printf(" %s ", CUNIT_COMPARE_RESULT_TO_STR(ret));
+	fputs(" ", stdout);
+	fputs(CUNIT_COMPARE_RESULT_TO_STR(ret), stdout);
+	fputs(" ", stdout);
 	cunit_any_print(&r);
-	printf(STR_NEWLINE);
+	fputs(STR_NEWLINE, stdout);
 	__cunit_print_info(format);
 	return false;
 }
@@ -333,7 +336,7 @@ bool __cunit_check_any_in_array(const cunit_context_t ctx, const cunit_any_t var
 
 	__cunit_print_not_expected(ctx);
 	cunit_any_print(&var);
-	printf(" is not in array" STR_NEWLINE);
+	fputs(" is not in array" STR_NEWLINE, stdout);
 	__cunit_print_info(format);
 	return false;
 }
@@ -346,7 +349,7 @@ bool __cunit_check_any_not_in_array(const cunit_context_t ctx, const cunit_any_t
 
 	__cunit_print_not_expected(ctx);
 	cunit_any_print(&var);
-	printf(" is in array" STR_NEWLINE);
+	fputs(" is in array" STR_NEWLINE, stdout);
 	__cunit_print_info(format);
 	return false;
 }
@@ -556,7 +559,7 @@ static inline bool __cunit_check_any_is_in_array(const cunit_any_t var, const vo
 
 static inline void __cunit_print_hex(const uint8_t *array, size_t length) {
 	if (!array) {
-		printf("(null)");
+		fputs("(null)", stdout);
 		return;
 	}
 
