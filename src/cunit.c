@@ -26,7 +26,9 @@
 #include <assert.h>
 #include <inttypes.h>
 #include <math.h>
-#include <stdarg.h>
+#include <stdarg.h>  // For va_list, va_start, va_end
+#include <stdint.h>  // For uintptr_t, INT64_MIN
+#include <stdio.h>   // For fputs, putchar, stdout
 
 // -------------------------[STATIC DECLARATION]-------------------------
 
@@ -73,6 +75,13 @@ enum cunit_compare_result {
 #define CUNIT_STRCMP(l, r)        (l == r ? 0 : !l ? -1 : !r ? 1 : strcmp(l, r))
 #define CUNIT_STRCASECMP(l, r)    (l == r ? 0 : !l ? -1 : !r ? 1 : strcasecmp(l, r))
 #define CUNIT_STRNCMP(l, r, size) (l == r ? 0 : !l ? -1 : !r ? 1 : strncmp(l, r, size))
+
+// Helper for printing uint64_t
+static inline void __cunit_print_u64(uint64_t n);
+// Helper for printing int64_t
+static inline void __cunit_print_i64(int64_t n);
+// Helper for printing pointer address in hex
+static inline void __cunit_print_ptr(const void *p);
 
 /**
  * Compare the contents of two byte arrays
@@ -138,24 +147,24 @@ void __cunit_fatal(const cunit_context_t ctx) {
 
 void cunit_any_print(const cunit_any_t *self) {
 	switch (self->type) {
-		case CUnitType_Bool: printf("%s", (self->d.b) ? "true" : "false"); break;
-		case CUnitType_Char: printf("%c", self->d.c); break;
+		case CUnitType_Bool: fputs((self->d.b) ? "true" : "false", stdout); break;
+		case CUnitType_Char: putchar(self->d.c); break;
 		case CUnitType_Float32: printf("%f", self->d.f32); break;
 		case CUnitType_Float64: printf("%f", self->d.f64); break;
-		case CUnitType_String: printf("%s", self->d.str); break;
-		case CUnitType_Pointer: printf("%p", self->d.ptr); break;
-		case CUnitType_Int: printf("%d", self->d.i); break;
-		case CUnitType_Int8: printf("%" PRIi8, self->d.i8); break;
-		case CUnitType_Int16: printf("%" PRIi16, self->d.i16); break;
-		case CUnitType_Int32: printf("%" PRIi32, self->d.i32); break;
-		case CUnitType_Int64: printf("%" PRIi64, self->d.i64); break;
-		case CUnitType_Uint: printf("%u", self->d.u); break;
-		case CUnitType_Uint8: printf("%" PRIu8, self->d.u8); break;
-		case CUnitType_Uint16: printf("%" PRIu16, self->d.u16); break;
-		case CUnitType_Uint32: printf("%" PRIu32, self->d.u32); break;
-		case CUnitType_Uint64: printf("%" PRIu64, self->d.u64); break;
+		case CUnitType_String: fputs(self->d.str ? self->d.str : "(null)", stdout); break;
+		case CUnitType_Pointer: __cunit_print_ptr(self->d.ptr); break;
+		case CUnitType_Int: __cunit_print_i64(self->d.i); break;
+		case CUnitType_Int8: __cunit_print_i64(self->d.i8); break;
+		case CUnitType_Int16: __cunit_print_i64(self->d.i16); break;
+		case CUnitType_Int32: __cunit_print_i64(self->d.i32); break;
+		case CUnitType_Int64: __cunit_print_i64(self->d.i64); break;
+		case CUnitType_Uint: __cunit_print_u64(self->d.u); break;
+		case CUnitType_Uint8: __cunit_print_u64(self->d.u8); break;
+		case CUnitType_Uint16: __cunit_print_u64(self->d.u16); break;
+		case CUnitType_Uint32: __cunit_print_u64(self->d.u32); break;
+		case CUnitType_Uint64: __cunit_print_u64(self->d.u64); break;
 		case CUnitType_Invalid:
-		default: printf("%s", "(invalid)"); break;
+		default: fputs("(invalid)", stdout); break;
 	}
 }
 
@@ -342,18 +351,66 @@ bool __cunit_check_any_not_in_array(const cunit_context_t ctx, const cunit_any_t
 	return false;
 }
 
-bool __cunit_check_ret(const cunit_context_t ctx, int ret, const char *format, ...) {
-	if (ret == 0) {
-		return true;
-	}
+// -------------------------[STATIC DEFINITION]-------------------------
 
-	__cunit_print_not_expected(ctx);
-	printf("return value is %d" STR_NEWLINE, ret);
-	__cunit_print_info(format);
-	return false;
+static inline void __cunit_print_u64(uint64_t n) {
+	// Buffer large enough for 20 digits of uint64_t + null terminator
+	char buf[21];
+	int  i = sizeof(buf) - 1;
+	buf[i] = '\0';
+
+	if (n == 0) {
+		buf[--i] = '0';
+	} else {
+		while (n > 0) {
+			buf[--i] = (n % 10) + '0';
+			n /= 10;
+		}
+	}
+	fputs(&buf[i], stdout);
 }
 
-// -------------------------[STATIC DEFINITION]-------------------------
+static inline void __cunit_print_i64(int64_t n) {
+	if (n < 0) {
+		putchar('-');
+		// Handle INT64_MIN which has no positive equivalent
+		if (n == INT64_MIN) {
+			fputs("9223372036854775808", stdout);
+			return;
+		}
+		n = -n;  // Make positive
+	}
+	__cunit_print_u64((uint64_t)n);
+}
+
+static inline void __cunit_print_ptr(const void *p) {
+	if (p == NULL) {
+		// Consistent with typical %p output for NULL
+		fputs("(nil)", stdout);
+		return;
+	}
+	// uintptr_t is an integer type wide enough to hold a pointer
+	uintptr_t addr = (uintptr_t)p;
+	// Buffer: "0x" + 2 hex chars per byte + null terminator
+	char  buf[sizeof(uintptr_t) * 2 + 3];
+	char *ptr = &buf[sizeof(buf) - 1];
+	*ptr      = '\0';
+
+	if (addr == 0) {
+		*--ptr = '0';
+	} else {
+		const char hex_digits[] = "0123456789abcdef";
+		while (addr > 0) {
+			// Get the last 4 bits and convert to hex char
+			*--ptr = hex_digits[addr & 0xF];
+			// Shift right by 4 bits
+			addr >>= 4;
+		}
+	}
+	*--ptr = 'x';  // Add "0x" prefix
+	*--ptr = '0';
+	fputs(ptr, stdout);  // Print the resulting hex string
+}
 
 static inline int __cunit_bytearray_compare(const uint8_t *l, const uint8_t *r, size_t size) {
 	for (size_t i = 0; i < size; i++) {
