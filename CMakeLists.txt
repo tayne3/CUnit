@@ -17,11 +17,14 @@ target_include_directories(cunit_obj PUBLIC ${PROJECT_SOURCE_DIR}/include)
 
 if(MSVC)
     string(REPLACE "/" "\\\\" CUNIT_ROOT_PATH ${CMAKE_SOURCE_DIR})
+    string(REPLACE "/" "\\\\" CUNIT_BUILD_PATH ${CMAKE_BINARY_DIR})
 else()
     set(CUNIT_ROOT_PATH ${CMAKE_SOURCE_DIR})
+    set(CUNIT_BUILD_PATH ${CMAKE_BINARY_DIR})
 endif()
 target_compile_definitions(cunit_obj PRIVATE
     CUNIT_ROOT_PATH="${CUNIT_ROOT_PATH}"
+    CUNIT_BUILD_PATH="${CUNIT_BUILD_PATH}"
 )
 
 if(CUNIT_BUILD_SHARED)

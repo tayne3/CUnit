@@ -23,28 +23,61 @@
  */
 #include "cunit.h"
 
-#include <assert.h>
-#include <inttypes.h>
-#include <math.h>
-#include <stdarg.h>  // For va_list, va_start, va_end
-#include <stdint.h>  // For uintptr_t, INT64_MIN
-#include <stdio.h>   // For fputs, putchar, stdout
+#include <stdarg.h>
 
 // -------------------------[STATIC DECLARATION]-------------------------
 
-#ifdef CUNIT_ROOT_PATH
-#define cunit_root_path CUNIT_ROOT_PATH
-#else
-#define cunit_root_path STR_NULL
-#endif
-
 #ifdef _MSC_VER
-#define strcasecmp  stricmp
-#define strncasecmp strnicmp
+#define strcasecmp  _stricmp
+#define strncasecmp _strnicmp
 #else
 #include <strings.h>
 #define stricmp  strcasecmp
 #define strnicmp strncasecmp
+#endif
+
+#ifdef _MSC_VER
+#define __cunit_separator '\\'
+#else
+#define __cunit_separator '/'
+#endif
+
+#ifdef _WIN32
+#define __cunit_is_drive_letter(path)                                                                  \
+	(((path[0] >= 'A' && path[0] <= 'Z') || (path[0] >= 'a' && path[0] <= 'z')) && (path[1] == ':') && \
+	 (path[2] == '\\' || path[2] == '/'))
+#define __cunit_is_unc_path(path)      ((path[0] == '\\' && path[1] == '\\') || (path[0] == '/' && path[1] == '/'))
+#define __cunit_is_absolute_path(path) (__cunit_is_drive_letter(path) || __cunit_is_unc_path(path))
+#else
+#define __cunit_is_absolute_path(path) (path[0] == '/')
+#endif
+
+#ifdef _WIN32
+#undef _WIN32_WINNT
+#define _WIN32_WINNT 0x0600
+#include <windows.h>
+typedef INIT_ONCE cunit_once_flag_t;
+typedef void (*cunit_once_routine_t)(void);
+#define CUNIT_ONCE_FLAG_INIT INIT_ONCE_STATIC_INIT
+
+static BOOL CALLBACK __cunit_once_callback(PINIT_ONCE InitOnce, PVOID Parameter, PVOID *Context) {
+	cunit_once_routine_t routine = (cunit_once_routine_t)Parameter;
+	routine();
+	return TRUE;
+}
+
+static void cunit_call_once(cunit_once_flag_t *flag, cunit_once_routine_t routine) {
+	InitOnceExecuteOnce(flag, __cunit_once_callback, (PVOID)routine, NULL);
+}
+#else
+#include <pthread.h>
+typedef pthread_once_t cunit_once_flag_t;
+typedef void (*cunit_once_routine_t)(void);
+#define CUNIT_ONCE_FLAG_INIT PTHREAD_ONCE_INIT
+
+static void cunit_call_once(cunit_once_flag_t *flag, cunit_once_routine_t routine) {
+	pthread_once(flag, routine);
+}
 #endif
 
 // comparison results: greater than, less than, and equal to
@@ -111,28 +144,213 @@ static inline void __cunit_print_hex(const uint8_t *array, size_t length);
 
 // -------------------------[GLOBAL DEFINITION]-------------------------
 
-const char *__cunit_relative(const char *abs_path) {
-	if (STR_ISEMPTY(abs_path)) {
-		return "(nil)";
-	}
-	if (STR_ISEMPTY(cunit_root_path)) {
-		return abs_path;
+#if defined(CUNIT_ROOT_PATH) && defined(CUNIT_BUILD_PATH)
+
+#define cunit_root_path    CUNIT_ROOT_PATH
+#define cunit_root_length  (sizeof(cunit_root_path) - 1)
+#define cunit_build_path   CUNIT_BUILD_PATH
+#define cunit_build_length (sizeof(cunit_build_path) - 1)
+
+static int __cunit_build_level = -1;
+
+/**
+ * @brief Initializes the __cunit_build_level.
+ * This function calculates the depth of the CMake build directory relative to the project's root directory.
+ * The __cunit_build_level represents how many ".." are needed to go from the build directory
+ * to the project root directory.
+ *
+ * For example:
+ * CUNIT_ROOT_PATH  = "/project"
+ * CUNIT_BUILD_PATH = "/project/build/debug"
+ * __cunit_build_level will be 2.
+ *
+ * CUNIT_ROOT_PATH  = "/project"
+ * CUNIT_BUILD_PATH = "/project/build/../build/debug" (equivalent to /project/build/debug)
+ * __cunit_build_level will also be 2, as ".." is handled.
+ *
+ * The function parses the part of cunit_build_path that comes after cunit_root_path.
+ * It counts directory levels, decrementing for ".." and incrementing for actual directory names.
+ * If cunit_build_path is not a subdirectory of cunit_root_path or is empty,
+ * __cunit_build_level remains -1, and path relativization for relative paths might not work as intended.
+ */
+static void __cunit_relative_initialization(void) {
+	if (STR_ISEMPTY(cunit_root_path) || cunit_build_length < cunit_root_length ||
+		strncmp(cunit_build_path, cunit_root_path, cunit_root_length) != 0) {
+		return;
 	}
 
-	for (size_t i = 0; i < sizeof(cunit_root_path) - 1; i++) {
-		if (abs_path[i] != cunit_root_path[i]) {
-			return abs_path;  // Return original path if not matched
+	int         build_level = 0, dot_count = 0;
+	const char *p = (const char *)cunit_build_path + cunit_root_length;
+	for (char c = *p; build_level >= 0 && c != '\0'; c = *p) {
+		if (c == __cunit_separator) {
+			if (dot_count == 2) {
+				build_level--;
+			}
+			dot_count = 0;
+			p++;
+			continue;
+		} else if (c == '.') {
+			dot_count++;
+			p++;
+		} else {
+			for (; *p != __cunit_separator; p++) {
+				if (*p == '\0') {
+					build_level++;
+					break;
+				}
+			}
+			if (*p == '\0') {
+				break;
+			}
+			build_level++;
+			dot_count = 0;
+			p++;
+			continue;
 		}
 	}
 
+	__cunit_build_level = build_level >= 0 ? build_level : -1;
+}
+
+/**
+ * @brief Clips the CUNIT_ROOT_PATH prefix from an absolute path.
+ * If the given absolute path 'abs' starts with CUNIT_ROOT_PATH, this function
+ * returns a pointer to the character following the CUNIT_ROOT_PATH prefix and
+ * any subsequent path separators.
+ *
+ * For example:
+ * CUNIT_ROOT_PATH = "/project"
+ * abs = "/project/src/main.c"
+ * Returns a pointer to "src/main.c".
+ *
+ * If 'abs' does not start with CUNIT_ROOT_PATH, or if CUNIT_ROOT_PATH is not defined/valid,
+ * the original 'abs' path is returned.
+ *
+ * @param abs The absolute path string.
+ * @return A pointer to the relativized path segment, or the original path.
+ */
+static const char *__cunit_absolute_clip(const char *abs) {
+	for (size_t i = 0; i < cunit_root_length; i++) {
+		if (abs[i] != cunit_root_path[i]) {
+			return abs;  // Return original path if not matched
+		}
+	}
 	// Remove prefix
-	const char *relative = abs_path + sizeof(cunit_root_path) - 1;
+	const char *relative = abs + cunit_root_length;
 	// Remove separators
-	for (; *relative == '\\' || *relative == '/';) {
+	for (; *relative == __cunit_separator;) {
 		relative++;
 	}
 	return relative;
 }
+
+/**
+ * @brief Attempts to convert a path relative to the build directory to a path relative to the project root.
+ * This function is called when __cunit_relative encounters a relative path.
+ * It uses __cunit_build_level (the depth of the build directory relative to the root)
+ * to process ".." segments at the beginning of the 'rel' path.
+ *
+ * The core idea is to "consume" leading ".." segments from 'rel' while decrementing
+ * 'dir_level' (initialized from __cunit_build_level).
+ * - If 'rel' is "foo/bar.c" and __cunit_build_level is 2 (e.g., build dir is root/build/debug),
+ *   'dir_level' starts at 2. The loop for ".." won't run. The `else` branch handles "foo",
+ *   increments `dir_level` to 3. Since `dir_level` (3) is not 0, the original 'rel' ("foo/bar.c")
+ *   is returned. This path is still effectively relative to the build directory.
+ * - If 'rel' is "../../src/main.c" and __cunit_build_level is 2,
+ *   'dir_level' starts at 2.
+ *   The first ".." in 'rel' reduces 'dir_level' to 1.
+ *   The second ".." in 'rel' reduces 'dir_level' to 0.
+ *   'p' now points to "src/main.c". Since 'dir_level' is 0, "src/main.c" is returned,
+ *   which is correctly relative to the project root.
+ *
+ * The `dir_level++` for non-"." and non-".." components is crucial. It ensures that if
+ * the path does not navigate "upwards" enough with ".." to reach or pass the project root level
+ * (i.e., make dir_level zero or negative), the function returns the original relative path
+ * (or a partially processed one if some ".." were present). This means
+ * the returned path, in such cases, remains relative to the build directory, not the project root.
+ *
+ * @param rel The path string, assumed to be relative to the build directory.
+ * @return A pointer to a path segment. If 'rel' could be fully relativized to the project root
+ *         (i.e., dir_level became 0), it points to the part of 'rel' that is relative to root.
+ *         Otherwise, it returns 'rel' (or a part of it if some '..' were processed),
+ *         which remains relative to the build directory or an intermediate directory.
+ */
+static const char *__cunit_relative_clip(const char *rel) {
+	static cunit_once_flag_t initialization_flag = CUNIT_ONCE_FLAG_INIT;
+	cunit_call_once(&initialization_flag, __cunit_relative_initialization);
+
+	const char *p         = rel;
+	int         dot_count = 0, dir_level = __cunit_build_level;
+	for (char c = *p; dir_level > 0 && c != '\0'; c = *p) {
+		if (c == __cunit_separator) {
+			if (dot_count == 2) {
+				dir_level--;
+			}
+			dot_count = 0;
+			p++;
+			continue;
+		} else if (c == '.') {
+			dot_count++;
+			p++;
+		} else {
+			for (; *p != __cunit_separator; p++) {
+				if (*p == '\0') {
+					break;
+				}
+			}
+			if (*p == '\0') {
+				break;
+			}
+			dir_level++;
+			dot_count = 0;
+			p++;
+			continue;
+		}
+	}
+
+	return dir_level == 0 ? p : rel;
+}
+
+/**
+ * @brief Provides a potentially shortened path string for display, relative to the project root if possible.
+ *
+ * This function processes `src_path` to make it more concise for output:
+ * 1. If `CUNIT_ROOT_PATH` and `CUNIT_BUILD_PATH` are not defined, it returns `src_path` as is (or "(nil)").
+ * 2. If `src_path` is an absolute path:
+ *    It calls `__cunit_absolute_clip` to remove the `CUNIT_ROOT_PATH` prefix,
+ *    if `src_path` is within the project root. Otherwise, returns `src_path`.
+ * 3. If `src_path` is a relative path (e.g., from `__FILE__` which is relative to the build dir):
+ *    It calls `__cunit_relative_clip`. This attempts to convert the path to be
+ *    relative to `CUNIT_ROOT_PATH` by processing leading ".." segments based on the
+ *    calculated `__cunit_build_level`.
+ *    - If the relative path successfully "ascends" to the project root (e.g., "../../src/file.c"
+ *      when build dir is "root/build/debug"), a path like "src/file.c" is returned.
+ *    - If the relative path does not ascend to the project root (e.g., "mytest.c" or "subdir/mytest.c"
+ *      when build dir is "root/build/debug"), the original (or partially processed) relative path
+ *      is returned. This path is then still relative to the build directory.
+ *
+ * This function operates purely with pointer arithmetic and does not perform memory allocations or
+ * create new strings. It returns pointers into the original `src_path` string or static strings.
+ *
+ * @param src_path The original source path string (e.g., from __FILE__).
+ * @return A pointer to a string representing the relativized path, or "(nil)".
+ */
+const char *__cunit_relative(const char *src_path) {
+	return !src_path                          ? "(nil)" :
+		   __cunit_is_absolute_path(src_path) ? __cunit_absolute_clip(src_path) :
+												__cunit_relative_clip(src_path);
+}
+
+#undef cunit_root_path
+#undef cunit_root_length
+#undef cunit_build_path
+#undef cunit_build_length
+
+#else
+const char *__cunit_relative(const char *src_path) {
+	return !src_path ? "(nil)" : src_path;
+}
+#endif
 
 void __cunit_pass(const cunit_context_t ctx) {
 	printf("\033[32;2m%s:%d\033[0m ", __cunit_relative(ctx.file), ctx.line);
