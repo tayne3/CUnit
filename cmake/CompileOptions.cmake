@@ -1,8 +1,3 @@
-if(CUNIT_BUILD_DEBUG)
-    add_definitions(-DDEBUG)
-else()
-    add_definitions(-DNDEBUG)
-endif()
 
 if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
     add_compile_options(
