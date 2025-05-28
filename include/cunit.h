@@ -138,7 +138,7 @@ typedef struct cunit_any {
 #define CUNIT_ANY_INIT_SPECIFY(_x, _t) {.d = {.u64 = (uint64_t)(_x)}, .type = (_t)}
 
 // clang-format off
-#define CUNIT_ANY_INIT_INVALID 	{ .d = {.u64 = 0}, .type = CUnitType_Invalid }
+#define CUNIT_ANY_INIT_INVALID 	   { .d = {.u64 = 0}, .type = CUnitType_Invalid }
 #define CUNIT_ANY_INIT_BOOL(_x)    { .d = {.b = (bool)(_x)}, .type = CUnitType_Bool }
 #define CUNIT_ANY_INIT_CHAR(_x)    { .d = {.c = (char)(_x)}, .type = CUnitType_Char }
 #define CUNIT_ANY_INIT_FLOAT(_x)   { .d = {.f32 = (float)(_x)}, .type = CUnitType_Float32 }
@@ -157,23 +157,23 @@ typedef struct cunit_any {
 #define CUNIT_ANY_INIT_UINT64(_x)  { .d = {.u64 = (uint64_t)(_x)}, .type = CUnitType_Uint64 }
 // clang-format on
 
-#define CUNIT_ANY_SPECIFY(_x, _t) (cunit_any_t) CUNIT_ANY_INIT_SPECIFY(_x, _t)
-#define CUNIT_ANY_BOOL(_x)        (cunit_any_t) CUNIT_ANY_INIT_BOOL(_x)
-#define CUNIT_ANY_CHAR(_x)        (cunit_any_t) CUNIT_ANY_INIT_CHAR(_x)
-#define CUNIT_ANY_FLOAT(_x)       (cunit_any_t) CUNIT_ANY_INIT_FLOAT(_x)
-#define CUNIT_ANY_DOUBLE(_x)      (cunit_any_t) CUNIT_ANY_INIT_DOUBLE(_x)
-#define CUNIT_ANY_STRING(_x)      (cunit_any_t) CUNIT_ANY_INIT_STRING(_x)
-#define CUNIT_ANY_POINTER(_x)     (cunit_any_t) CUNIT_ANY_INIT_POINTER(_x)
-#define CUNIT_ANY_INT(_x)         (cunit_any_t) CUNIT_ANY_INIT_INT(_x)
-#define CUNIT_ANY_INT8(_x)        (cunit_any_t) CUNIT_ANY_INIT_INT8(_x)
-#define CUNIT_ANY_INT16(_x)       (cunit_any_t) CUNIT_ANY_INIT_INT16(_x)
-#define CUNIT_ANY_INT32(_x)       (cunit_any_t) CUNIT_ANY_INIT_INT32(_x)
-#define CUNIT_ANY_INT64(_x)       (cunit_any_t) CUNIT_ANY_INIT_INT64(_x)
-#define CUNIT_ANY_UINT(_x)        (cunit_any_t) CUNIT_ANY_INIT_UINT(_x)
-#define CUNIT_ANY_UINT8(_x)       (cunit_any_t) CUNIT_ANY_INIT_UINT8(_x)
-#define CUNIT_ANY_UINT16(_x)      (cunit_any_t) CUNIT_ANY_INIT_UINT16(_x)
-#define CUNIT_ANY_UINT32(_x)      (cunit_any_t) CUNIT_ANY_INIT_UINT32(_x)
-#define CUNIT_ANY_UINT64(_x)      (cunit_any_t) CUNIT_ANY_INIT_UINT64(_x)
+#define CUNIT_ANY_SPECIFY(_x, _t) ((cunit_any_t)CUNIT_ANY_INIT_SPECIFY(_x, _t))
+#define CUNIT_ANY_BOOL(_x)        ((cunit_any_t)CUNIT_ANY_INIT_BOOL(_x))
+#define CUNIT_ANY_CHAR(_x)        ((cunit_any_t)CUNIT_ANY_INIT_CHAR(_x))
+#define CUNIT_ANY_FLOAT(_x)       ((cunit_any_t)CUNIT_ANY_INIT_FLOAT(_x))
+#define CUNIT_ANY_DOUBLE(_x)      ((cunit_any_t)CUNIT_ANY_INIT_DOUBLE(_x))
+#define CUNIT_ANY_STRING(_x)      ((cunit_any_t)CUNIT_ANY_INIT_STRING(_x))
+#define CUNIT_ANY_POINTER(_x)     ((cunit_any_t)CUNIT_ANY_INIT_POINTER(_x))
+#define CUNIT_ANY_INT(_x)         ((cunit_any_t)CUNIT_ANY_INIT_INT(_x))
+#define CUNIT_ANY_INT8(_x)        ((cunit_any_t)CUNIT_ANY_INIT_INT8(_x))
+#define CUNIT_ANY_INT16(_x)       ((cunit_any_t)CUNIT_ANY_INIT_INT16(_x))
+#define CUNIT_ANY_INT32(_x)       ((cunit_any_t)CUNIT_ANY_INIT_INT32(_x))
+#define CUNIT_ANY_INT64(_x)       ((cunit_any_t)CUNIT_ANY_INIT_INT64(_x))
+#define CUNIT_ANY_UINT(_x)        ((cunit_any_t)CUNIT_ANY_INIT_UINT(_x))
+#define CUNIT_ANY_UINT8(_x)       ((cunit_any_t)CUNIT_ANY_INIT_UINT8(_x))
+#define CUNIT_ANY_UINT16(_x)      ((cunit_any_t)CUNIT_ANY_INIT_UINT16(_x))
+#define CUNIT_ANY_UINT32(_x)      ((cunit_any_t)CUNIT_ANY_INIT_UINT32(_x))
+#define CUNIT_ANY_UINT64(_x)      ((cunit_any_t)CUNIT_ANY_INIT_UINT64(_x))
 
 #define cunit_any_value_bool(_any)    ((_any).d.b)
 #define cunit_any_value_char(_any)    ((_any).d.c)
@@ -208,8 +208,7 @@ typedef struct cunit_context {
 } cunit_context_t;
 
 #define CUNIT_CTX_INIT(_file, _func, _line) {.file = (_file), .func = (_func), .line = (_line)}
-
-#define CUNIT_CTX_CURR (cunit_context_t) CUNIT_CTX_INIT(__cunit_file__, __cunit_func__, __cunit_line__)
+#define CUNIT_CTX_CURR                      ((cunit_context_t)CUNIT_CTX_INIT(__cunit_file__, __cunit_func__, __cunit_line__))
 
 // -------------------------[cunit assert]-------------------------
 

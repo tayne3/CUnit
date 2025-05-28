@@ -1,7 +1,10 @@
 # 🧪 CUnit: A lightweight and easy-to-integrate C unit testing library
 
-![License](https://img.shields.io/badge/license-MIT-blue.svg)
 ![CMake](https://img.shields.io/badge/CMake-3.12%2B-brightgreen)
+![License](https://img.shields.io/badge/license-MIT-blue.svg)
+[![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/tayne3/CUnit)
+[![Release](https://img.shields.io/github/v/release/tayne3/CUnit?color=%23ff8936&logo=fitbit&style=flat-square)](https://github.com/tayne3/CUnit/releases)
+[![Tag](https://img.shields.io/github/v/tag/tayne3/CUnit?color=%23ff8936&logo=fitbit&style=flat-square)](https://github.com/tayne3/CUnit/tags)
 
 CUnit 是一个轻量且易于集成的 C 语言单元测试库，旨在为 C 开发者提供简单而强大的测试框架。它支持多种数据类型的断言，适合嵌入式系统和资源受限的环境。
 
