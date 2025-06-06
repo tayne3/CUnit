@@ -1,0 +1,37 @@
+name: Release
+run-name: ${{ github.actor }} is releasing the project 🚀
+
+on:
+  workflow_dispatch:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Configure Git for flaky networks
+        run: |
+          git config --global http.postBuffer 524288000
+          git config --global http.lowSpeedLimit 0
+          git config --global http.lowSpeedTime 0
+      - name: Check out repository code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Build Linux binary
+        run: |
+          cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Release
+          cmake --build build --parallel 8 --
+      - name: List files in the binary directory
+        run: |
+          ls bin/release-linux
+      - name: Run examples
+        run: |
+          ./bin/release-linux/sample
+          ! ./bin/release-linux/expect_fail
+      - name: Publish Release
+        uses: softprops/action-gh-release@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} 
