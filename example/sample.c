@@ -99,12 +99,12 @@ int main(void) {
 	assert_float32_ne(NAN, 0.0f);
 	assert_float32_eq(NAN, 0.0f / 0.0f);
 
-	assert_float32_eq(NAN, 0.0f / 0.0f);
-	assert_float32_ne(NAN, 0.0f);
-	assert_float32_lt(NAN, 0.0f);
-	assert_float32_le(NAN, 0.0f);
-	assert_float32_gt(0.0f, NAN);
-	assert_float32_ge(NAN, NAN);
+	assert_float32_eq(123.009f, 123.009f);
+	assert_float32_ne(123.009f, 123.010f);
+	assert_float32_lt(123.009f, 123.010f);
+	assert_float32_le(123.009f, 123.010f);
+	assert_float32_gt(123.010f, 123.009f);
+	assert_float32_ge(123.010f, 123.009f);
 
 	assert_float64_ge(1.10, 0.04);
 	assert_float64_lt(NAN, 0.0);
@@ -114,12 +114,12 @@ int main(void) {
 	assert_float64_ne(NAN, 0.0);
 	assert_float64_eq(NAN, 0.0 / 0.0);
 
-	assert_float64_eq(NAN, 0.0 / 0.0);
-	assert_float64_ne(NAN, 0.0);
-	assert_float64_lt(NAN, 0.0);
-	assert_float64_le(NAN, 0.0);
-	assert_float64_gt(0.0, NAN);
-	assert_float64_ge(NAN, NAN);
+	assert_float64_eq(123456.78900001, 123456.78900001);
+	assert_float64_ne(123456.78900001, 123456.78900000);
+	assert_float64_lt(123456.78900000, 123456.78900001);
+	assert_float64_le(123456.78900000, 123456.78900001);
+	assert_float64_gt(123456.78900001, 123456.78900000);
+	assert_float64_ge(123456.78900001, 123456.78900000);
 
 	assert_pointer_eq(STR_NULL, STR_NULL);
 	assert_pointer_ne(NULL, STR_NULL);
