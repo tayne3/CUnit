@@ -397,17 +397,14 @@ int cunit_any_compare(const cunit_any_t *l, const cunit_any_t *r) {
 		case CUnitType_Bool: return (l->d.b > r->d.b) - (l->d.b < r->d.b);
 		case CUnitType_Char: return (l->d.c > r->d.c) - (l->d.c < r->d.c);
 		case CUnitType_Float32:
-			// return isnan(l->d.f32)                            ? isnan(r->d.f32) ? 0 : -1 :
-			// 	   isnan(r->d.f32)                            ? 1 :
-			// 	   (fabsf(l->d.f32 - r->d.f32) < FLT_EPSILON) ? 0 :
-			// 													(l->d.f32 > r->d.f32) - (l->d.f32 < r->d.f32);
 			return isnan(l->d.f32)                            ? isnan(r->d.f32) ? 0 : -1 :
 				   isnan(r->d.f32)                            ? 1 :
+				   (fabsf(l->d.f32 - r->d.f32) <= FLT_EPSILON) ? 0 :
 																(l->d.f32 > r->d.f32) - (l->d.f32 < r->d.f32);
 		case CUnitType_Float64:
 			return isnan(l->d.f64)                           ? isnan(r->d.f64) ? 0 : -1 :
 				   isnan(r->d.f64)                           ? 1 :
-				   (fabs(l->d.f64 - r->d.f64) < DBL_EPSILON) ? 0 :
+				   (fabs(l->d.f64 - r->d.f64) <= DBL_EPSILON) ? 0 :
 															   (l->d.f64 > r->d.f64) - (l->d.f64 < r->d.f64);
 		case CUnitType_String: return CUNIT_STRCMP(l->d.str, r->d.str);
 		case CUnitType_Pointer: return (l->d.ptr > r->d.ptr) - (l->d.ptr < r->d.ptr);
@@ -744,7 +741,7 @@ static inline bool __cunit_check_any_is_in_array(const cunit_any_t var, const vo
 					}
 					continue;
 				}
-				if (fabsf(value - var.d.f32) < FLT_EPSILON) {
+				if (fabsf(value - var.d.f32) <= FLT_EPSILON) {
 					return true;
 				}
 			}
@@ -758,7 +755,7 @@ static inline bool __cunit_check_any_is_in_array(const cunit_any_t var, const vo
 					}
 					continue;
 				}
-				if (fabs(value - var.d.f64) < DBL_EPSILON) {
+				if (fabs(value - var.d.f64) <= DBL_EPSILON) {
 					return true;
 				}
 			}
