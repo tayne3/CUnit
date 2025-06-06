@@ -1,10 +1,13 @@
+add_library(cunit_compile_dependency INTERFACE)
+target_compile_features(cunit_compile_dependency INTERFACE c_std_99)
+
 string(TOLOWER "${CMAKE_SYSTEM_NAME}" SYSTEM_NAME)
 if(CUNIT_BUILD_DEBUG)
 	set(CUNIT_OUTPUT_DIR ${PROJECT_SOURCE_DIR}/bin/debug-${SYSTEM_NAME})
-    set(CUNIT_COMPILE_DEFINITIONS -DDEBUG)
+	target_compile_definitions(cunit_compile_dependency INTERFACE -DDEBUG)
 else()
 	set(CUNIT_OUTPUT_DIR ${PROJECT_SOURCE_DIR}/bin/release-${SYSTEM_NAME})
-	set(CUNIT_COMPILE_DEFINITIONS -DNDEBUG)
+	target_compile_definitions(cunit_compile_dependency INTERFACE -DNDEBUG)
 endif()
 
 if(NOT CMAKE_RUNTIME_OUTPUT_DIRECTORY)
@@ -45,3 +48,41 @@ set(CMAKE_CXX_EXTENSIONS ON)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS ON)
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
+
+# Set specific C language options for the MSVC compiler
+if(CMAKE_C_COMPILER_ID STREQUAL "MSVC")
+    target_compile_options(cunit_compile_dependency INTERFACE 
+		"$<$<COMPILE_LANGUAGE:C>:/source-charset:utf-8>"
+	)
+endif()
+
+# Set C language warning options for compilers other than MSVC and ClangCL (MSVC frontend).
+# These options help catch potential code issues.
+if(NOT (CMAKE_C_COMPILER_ID STREQUAL "MSVC" OR ("${CMAKE_C_COMPILER_ID}" STREQUAL "Clang" AND "${CMAKE_C_COMPILER_FRONTEND_VARIANT}" STREQUAL "MSVC")))
+    target_compile_options(cunit_compile_dependency INTERFACE
+        "$<$<COMPILE_LANGUAGE:C>:-Wall>"
+        "$<$<COMPILE_LANGUAGE:C>:-Wextra>"
+        "$<$<COMPILE_LANGUAGE:C>:-Werror=return-type>"
+    )
+endif()
+
+# Handle specific warning suppression options for older GCC versions (less than 6.0).
+# -Wno-missing-field-initializers is used to suppress warnings about incompletely initialized structs.
+if(CMAKE_C_COMPILER_ID STREQUAL "GNU" AND CMAKE_C_COMPILER_VERSION VERSION_LESS 6.0)
+    target_compile_options(cunit_compile_dependency INTERFACE 
+		"$<$<COMPILE_LANGUAGE:C>:-Wno-missing-field-initializers>"
+	)
+endif()
+
+# Set the CUNIT_ROOT_PATH and CUNIT_BUILD_PATH variables.
+if(CMAKE_C_COMPILER_ID STREQUAL "MSVC" OR ("${CMAKE_C_COMPILER_ID}" STREQUAL "Clang" AND "${CMAKE_C_COMPILER_FRONTEND_VARIANT}" STREQUAL "MSVC"))
+    string(REPLACE "/" "\\\\" CUNIT_ROOT_PATH ${CMAKE_SOURCE_DIR})
+    string(REPLACE "/" "\\\\" CUNIT_BUILD_PATH ${CMAKE_BINARY_DIR})
+else()
+    set(CUNIT_ROOT_PATH ${CMAKE_SOURCE_DIR})
+    set(CUNIT_BUILD_PATH ${CMAKE_BINARY_DIR})
+endif()
+target_compile_definitions(cunit_compile_dependency INTERFACE
+    CUNIT_ROOT_PATH="${CUNIT_ROOT_PATH}"
+    CUNIT_BUILD_PATH="${CUNIT_BUILD_PATH}"
+)
