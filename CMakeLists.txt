@@ -3,7 +3,7 @@ cmake_minimum_required(VERSION 3.12)
 include(cmake/PreventInSourceBuilds.cmake)
 include(cmake/GitVersion.cmake)
 gitversion_extract(VERSION PROJECT_VERSION DEFAULT_VERSION 0.1.6)
-project(CUnit VERSION ${PROJECT_VERSION})
+project(cunit VERSION ${PROJECT_VERSION})
 
 include(cmake/ProjectIsTopLevel.cmake)
 include(cmake/OptionVariables.cmake)
