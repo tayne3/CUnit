@@ -139,7 +139,7 @@ static inline bool __cunit_check_any_is_in_array(const cunit_any_t var, const vo
 
 /**
  * Print a hexadecimal array
- * @param array The array to print
+ * @param array The array to cunit_print
  * @param length Length of the array
  */
 static inline void __cunit_print_hex(const uint8_t *array, size_t length);
@@ -266,7 +266,7 @@ static const char *__cunit_absolute_clip(const char *abs) {
  *   which is correctly relative to the project root.
  *
  * The `dir_level++` for non-"." and non-".." components is crucial. It ensures that if
- * the path does not navigate "upwards" enough with ".." to reach or pass the project root level
+ * the path does not navigate "upwards" enough with ".." to reach or cunit_pass the project root level
  * (i.e., make dir_level zero or negative), the function returns the original relative path
  * (or a partially processed one if some ".." were present). This means
  * the returned path, in such cases, remains relative to the build directory, not the project root.
@@ -432,8 +432,7 @@ void cunit_any_swap(cunit_any_t *l, cunit_any_t *r) {
 	l->type ^= r->type;
 }
 
-bool __cunit_check_string(const cunit_context_t ctx, const char *l, const char *r, bool equal, const char *format,
-						  ...) {
+bool __cunit_check_str(const cunit_context_t ctx, const char *l, const char *r, bool equal, const char *format, ...) {
 	const bool is_str_equal = (l == r) || (l && r && !CUNIT_STRCMP(l, r));
 	if (is_str_equal == equal) {
 		return true;

@@ -131,7 +131,7 @@ int main(void) {
 	assert_str_case("HellO", "hEllo");
 	assert_str_hex("HelloWorld", "Hello", 5);
 
-	cunit_println("print...");
+	cunit_println("cunit_print...");
 
 	check_bool(true, false, "check bool: true != false");
 	check_false(0 == 0, "check true: 0 == 0");
