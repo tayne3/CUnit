@@ -126,10 +126,10 @@ int main(void) {
 	assert_null(NULL);
 	assert_not_null(STR_NULL);
 
-	assert_string("Hello", "Hello");
-	assert_string_n("HelloWorld", "Hello", 5);
-	assert_string_case("HellO", "hEllo");
-	assert_string_hex("HelloWorld", "Hello", 5);
+	assert_str_eq("Hello", "Hello");
+	assert_str_n("HelloWorld", "Hello", 5);
+	assert_str_case("HellO", "hEllo");
+	assert_str_hex("HelloWorld", "Hello", 5);
 
 	cunit_println("print...");
 
@@ -153,22 +153,22 @@ int main(void) {
 	check_int_eq(0, 0);
 	check_int_eq(0, -1);
 
-	assert_string(STR_NULL, STR_NULL);
-	assert_string("hello world", "hello world");
-	assert_string_n("hello world", "hello", 5);
-	check_string("hello world", "hello");
-	check_string_case("hello world", "Hello");
+	assert_str_eq(STR_NULL, STR_NULL);
+	assert_str_eq("hello world", "hello world");
+	assert_str_n("hello world", "hello", 5);
+	check_str_eq("hello world", "hello");
+	check_str_case("hello world", "Hello");
 
 	{
 		const unsigned char hex_1[] = {0x01, 0x02, 0x03, 0x04, 0x05};
 		const unsigned char hex_2[] = {0x01, 0x02, 0x03, 0x05, 0x04};
 
-		assert_string_hex(hex_1, hex_2, 1);
-		assert_string_hex(hex_1, hex_2, 2);
-		assert_string_hex(hex_1, hex_2, 3);
+		assert_str_hex(hex_1, hex_2, 1);
+		assert_str_hex(hex_1, hex_2, 2);
+		assert_str_hex(hex_1, hex_2, 3);
 
-		check_string_hex(hex_1, hex_2, 4);
-		check_string_hex(hex_1, hex_2, 5);
+		check_str_hex(hex_1, hex_2, 4);
+		check_str_hex(hex_1, hex_2, 5);
 	}
 
 	{
