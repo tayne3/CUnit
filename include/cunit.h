@@ -848,22 +848,22 @@ typedef struct cunit_context {
 		}                                              \
 	} while (0)
 
-#define check_pointer_eq(__l, __r, ...) \
+#define check_ptr_eq(__l, __r, ...) \
 	___cunit_check_compare(CUNIT_ANY_POINTER(__l), CUNIT_ANY_POINTER(__r), CUnit_Equal, __VA_ARGS__)
-#define assert_pointer_eq(__l, __r, ...)                \
-	do {                                                \
-		if (!check_pointer_eq(__l, __r, __VA_ARGS__)) { \
-			cunit_fatal();                              \
-		}                                               \
+#define assert_ptr_eq(__l, __r, ...)                \
+	do {                                            \
+		if (!check_ptr_eq(__l, __r, __VA_ARGS__)) { \
+			cunit_fatal();                          \
+		}                                           \
 	} while (0)
 
-#define check_pointer_ne(__l, __r, ...) \
+#define check_ptr_ne(__l, __r, ...) \
 	___cunit_check_compare(CUNIT_ANY_POINTER(__l), CUNIT_ANY_POINTER(__r), CUnit_NotEqual, __VA_ARGS__)
-#define assert_pointer_ne(__l, __r, ...)                \
-	do {                                                \
-		if (!check_pointer_ne(__l, __r, __VA_ARGS__)) { \
-			cunit_fatal();                              \
-		}                                               \
+#define assert_ptr_ne(__l, __r, ...)                \
+	do {                                            \
+		if (!check_ptr_ne(__l, __r, __VA_ARGS__)) { \
+			cunit_fatal();                          \
+		}                                           \
 	} while (0)
 
 #define check_str_eq(__l, __r, ...) \
@@ -1281,15 +1281,15 @@ typedef struct cunit_context {
 #define check_double_ge(...)  ___check_double_ge(__VA_ARGS__, STR_NULL)
 #define assert_double_ge(...) ___cunit_assert_check(check_double_ge, __VA_ARGS__)
 
-#define ___check_pointer_eq(__l, __r, ...) \
+#define ___check_ptr_eq(__l, __r, ...) \
 	___cunit_check_compare(CUNIT_ANY_POINTER(__l), CUNIT_ANY_POINTER(__r), CUnit_Equal, __VA_ARGS__)
-#define check_pointer_eq(...)  ___check_pointer_eq(__VA_ARGS__, STR_NULL)
-#define assert_pointer_eq(...) ___cunit_assert_check(check_pointer_eq, __VA_ARGS__)
+#define check_ptr_eq(...)  ___check_ptr_eq(__VA_ARGS__, STR_NULL)
+#define assert_ptr_eq(...) ___cunit_assert_check(check_ptr_eq, __VA_ARGS__)
 
-#define ___check_pointer_ne(__l, __r, ...) \
+#define ___check_ptr_ne(__l, __r, ...) \
 	___cunit_check_compare(CUNIT_ANY_POINTER(__l), CUNIT_ANY_POINTER(__r), CUnit_NotEqual, __VA_ARGS__)
-#define check_pointer_ne(...)  ___check_pointer_ne(__VA_ARGS__, STR_NULL)
-#define assert_pointer_ne(...) ___cunit_assert_check(check_pointer_ne, __VA_ARGS__)
+#define check_ptr_ne(...)  ___check_ptr_ne(__VA_ARGS__, STR_NULL)
+#define assert_ptr_ne(...) ___cunit_assert_check(check_ptr_ne, __VA_ARGS__)
 
 #define ___check_str_eq(__l, __r, ...) \
 	___cunit_check_compare(CUNIT_ANY_STRING(__l), CUNIT_ANY_STRING(__r), CUnit_Equal, __VA_ARGS__)

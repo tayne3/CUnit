@@ -121,8 +121,8 @@ int main(void) {
 	assert_float64_gt(123456.78900001, 123456.78900000);
 	assert_float64_ge(123456.78900001, 123456.78900000);
 
-	assert_pointer_eq(STR_NULL, STR_NULL);
-	assert_pointer_ne(NULL, STR_NULL);
+	assert_ptr_eq(STR_NULL, STR_NULL);
+	assert_ptr_ne(NULL, STR_NULL);
 	assert_null(NULL);
 	assert_not_null(STR_NULL);
 
