@@ -24,7 +24,7 @@
 # |---------------------------|---------------------|-----------------------------------------------|---------------------------------------------------------------|
 # | Variable / Option         | Availability        | Default                                       | Description                                                   |
 # |===========================|=====================|===============================================|===============================================================|
-# | CMAKE_BUILD_TYPE          | 总是                | "Debug" (如果未设置)                          | 标准 CMake 变量：Debug, Release, MinSizeRel, RelWithDebInfo。 |
+# | CMAKE_BUILD_TYPE          | 总是                | "Debug" (如果未设置)                          | 标准 CMake 变量: Debug, Release, MinSizeRel, RelWithDebInfo。 |
 # | CUNIT_BUILD_SHARED        | 总是 (选项)         | OFF                                           | 如果为 ON 构建共享库，为 OFF 构建静态库。                     |
 # | CUNIT_BUILD_EXAMPLE       | 顶层项目 (选项)     | OFF                                           | 构建示例程序。                                                |
 # |---------------------------|---------------------|-----------------------------------------------|---------------------------------------------------------------|
@@ -43,7 +43,7 @@ else()
 	message(FATAL_ERROR "Unsupported build type: ${CMAKE_BUILD_TYPE}.")
 endif()
 
-option(CUNIT_BUILD_SHARED "build shared library" ON)
+option(CUNIT_BUILD_SHARED "build shared library" OFF)
 mark_as_advanced(CUNIT_BUILD_SHARED)
 if(CUNIT_BUILD_SHARED)
     set(PROJECT_LIB_TYPE SHARED)
