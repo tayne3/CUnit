@@ -29,6 +29,9 @@ endif()
 
 add_library(${PROJECT_NAME}_compile_dependency INTERFACE)
 target_compile_features(${PROJECT_NAME}_compile_dependency INTERFACE c_std_99)
+if(UNIX)
+    target_link_libraries(${PROJECT_NAME}_compile_dependency INTERFACE pthread)
+endif()
 
 string(TOLOWER "${CMAKE_SYSTEM_NAME}" SYSTEM_NAME)
 if(PROJECT_BUILD_DEBUG)

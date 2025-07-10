@@ -43,9 +43,8 @@
 #endif
 
 #ifdef _WIN32
-#define __cunit_is_drive_letter(path)                                                                  \
-	(((path[0] >= 'A' && path[0] <= 'Z') || (path[0] >= 'a' && path[0] <= 'z')) && (path[1] == ':') && \
-	 (path[2] == '\\' || path[2] == '/'))
+#define __cunit_is_drive_letter(path) \
+	(((path[0] >= 'A' && path[0] <= 'Z') || (path[0] >= 'a' && path[0] <= 'z')) && (path[1] == ':') && (path[2] == '\\' || path[2] == '/'))
 #define __cunit_is_unc_path(path)      ((path[0] == '\\' && path[1] == '\\') || (path[0] == '/' && path[1] == '/'))
 #define __cunit_is_absolute_path(path) (__cunit_is_drive_letter(path) || __cunit_is_unc_path(path))
 #else
@@ -68,18 +67,14 @@ static BOOL CALLBACK __cunit_once_callback(PINIT_ONCE InitOnce, PVOID Parameter,
 	return TRUE;
 }
 
-static void cunit_call_once(cunit_once_flag_t *flag, cunit_once_routine_t routine) {
-	InitOnceExecuteOnce(flag, __cunit_once_callback, (PVOID)routine, NULL);
-}
+static void cunit_call_once(cunit_once_flag_t *flag, cunit_once_routine_t routine) { InitOnceExecuteOnce(flag, __cunit_once_callback, (PVOID)routine, NULL); }
 #else
 #include <pthread.h>
 typedef pthread_once_t cunit_once_flag_t;
 typedef void (*cunit_once_routine_t)(void);
 #define CUNIT_ONCE_FLAG_INIT PTHREAD_ONCE_INIT
 
-static void cunit_call_once(cunit_once_flag_t *flag, cunit_once_routine_t routine) {
-	pthread_once(flag, routine);
-}
+static void cunit_call_once(cunit_once_flag_t *flag, cunit_once_routine_t routine) { pthread_once(flag, routine); }
 #endif
 
 // comparison results: greater than, less than, and equal to
@@ -87,16 +82,15 @@ enum cunit_compare_result {
 	CUnitCompare_Unknown = -2,
 	CUnitCompare_Less    = -1,
 	CUnitCompare_Equal   = 0,
-	CUnitCompare_Greater = 1
+	CUnitCompare_Greater = 1,
 };
 
-#define CUNIT_COMPARE_RESULT_TO_STR(x) \
-	((x) == CUnitCompare_Less ? "<" : (x) == CUnitCompare_Equal ? "=" : (x) == CUnitCompare_Greater ? ">" : "?")
+#define CUNIT_COMPARE_RESULT_TO_STR(x) ((x) == CUnitCompare_Less ? "<" : (x) == CUnitCompare_Equal ? "=" : (x) == CUnitCompare_Greater ? ">" : "?")
 
 #define __cunit_print_not_expected(ctx) \
-	printf("\033[33;2m%s:%d\033[0m not expected: ", __cunit_relative(ctx.file), ctx.line)
+	do { printf("\033[33;2m%s:%d\033[0m not expected: ", __cunit_relative(ctx.file), ctx.line); } while (0)
 
-#define __cunit_print_info(format)                                                   \
+#define __cunit_print_info(ctx, format)                                              \
 	do {                                                                             \
 		if (!STR_ISEMPTY(format)) {                                                  \
 			printf("\033[37;2m%s:%d\033[0m ", __cunit_relative(ctx.file), ctx.line); \
@@ -112,11 +106,21 @@ enum cunit_compare_result {
 #define CUNIT_STRCASECMP(l, r)    (l == r ? 0 : !l ? -1 : !r ? 1 : strcasecmp(l, r))
 #define CUNIT_STRNCMP(l, r, size) (l == r ? 0 : !l ? -1 : !r ? 1 : strncmp(l, r, size))
 
-// Helper for printing uint64_t
+#define CUNIT_FLOAT32_COMPARE(l, r) (isnan(l) ? isnan(r) ? 0 : -1 : isnan(r) ? 1 : (fabsf(l - r) <= FLT_EPSILON) ? 0 : (l > r) - (l < r))
+#define CUNIT_FLOAT64_COMPARE(l, r) (isnan(l) ? isnan(r) ? 0 : -1 : isnan(r) ? 1 : (fabs(l - r) <= DBL_EPSILON) ? 0 : (l > r) - (l < r))
+
+// Print output
+static inline void __cunit_value_print(const cunit_value_t *self);
+// Compare result (-1=less than; 0=equal; 1=greater than; -2=error)
+static inline int __cunit_value_compare(const cunit_value_t *l, const cunit_value_t *r);
+
+static inline void __cunit_print_bool(bool b);
+static inline void __cunit_print_char(char c);
+static inline void __cunit_print_f32(float f);
+static inline void __cunit_print_f64(double f);
+static inline void __cunit_print_str(const char *str);
 static inline void __cunit_print_u64(uint64_t n);
-// Helper for printing int64_t
 static inline void __cunit_print_i64(int64_t n);
-// Helper for printing pointer address in hex
 static inline void __cunit_print_ptr(const void *p);
 
 /**
@@ -130,12 +134,12 @@ static inline int __cunit_bytearray_compare(const uint8_t *l, const uint8_t *r, 
 
 /**
  * Check if a variable is in an array
- * @param var The variable to check
+ * @param value The variable to check
  * @param array The array
  * @param size Size of the array
  * @return Returns true if the variable is in the array, otherwise returns false
  */
-static inline bool __cunit_check_any_is_in_array(const cunit_any_t var, const void *array, size_t size);
+static inline bool __cunit_check_any_is_in_array(const cunit_value_t value, const void *array, size_t size);
 
 /**
  * Print a hexadecimal array
@@ -176,8 +180,7 @@ static int __cunit_build_level = -1;
  * __cunit_build_level remains -1, and path relativization for relative paths might not work as intended.
  */
 static void __cunit_relative_initialization(void) {
-	if (STR_ISEMPTY(cunit_root_path) || cunit_build_length < cunit_root_length ||
-		strncmp(cunit_build_path, cunit_root_path, cunit_root_length) != 0) {
+	if (STR_ISEMPTY(cunit_root_path) || cunit_build_length < cunit_root_length || strncmp(cunit_build_path, cunit_root_path, cunit_root_length) != 0) {
 		return;
 	}
 
@@ -185,9 +188,7 @@ static void __cunit_relative_initialization(void) {
 	const char *p = (const char *)cunit_build_path + cunit_root_length;
 	for (char c = *p; build_level >= 0 && c != '\0'; c = *p) {
 		if (c == __cunit_separator) {
-			if (dot_count == 2) {
-				build_level--;
-			}
+			if (dot_count == 2) { build_level--; }
 			dot_count = 0;
 			p++;
 			continue;
@@ -201,9 +202,7 @@ static void __cunit_relative_initialization(void) {
 					break;
 				}
 			}
-			if (*p == '\0') {
-				break;
-			}
+			if (*p == '\0') { break; }
 			build_level++;
 			dot_count = 0;
 			p++;
@@ -240,9 +239,7 @@ static const char *__cunit_absolute_clip(const char *abs) {
 	// Remove prefix
 	const char *relative = abs + cunit_root_length;
 	// Remove separators
-	for (; *relative == __cunit_separator;) {
-		relative++;
-	}
+	for (; *relative == __cunit_separator;) { relative++; }
 	return relative;
 }
 
@@ -285,9 +282,7 @@ static const char *__cunit_relative_clip(const char *rel) {
 	int         dot_count = 0, dir_level = __cunit_build_level;
 	for (char c = *p; dir_level > 0 && c != '\0'; c = *p) {
 		if (c == __cunit_separator) {
-			if (dot_count == 2) {
-				dir_level--;
-			}
+			if (dot_count == 2) { dir_level--; }
 			dot_count = 0;
 			p++;
 			continue;
@@ -296,13 +291,9 @@ static const char *__cunit_relative_clip(const char *rel) {
 			p++;
 		} else {
 			for (; *p != __cunit_separator; p++) {
-				if (*p == '\0') {
-					break;
-				}
+				if (*p == '\0') { break; }
 			}
-			if (*p == '\0') {
-				break;
-			}
+			if (*p == '\0') { break; }
 			dir_level++;
 			dot_count = 0;
 			p++;
@@ -338,9 +329,7 @@ static const char *__cunit_relative_clip(const char *rel) {
  * @return A pointer to a string representing the relativized path, or "(nil)".
  */
 const char *__cunit_relative(const char *src_path) {
-	return !src_path                          ? "(nil)" :
-		   __cunit_is_absolute_path(src_path) ? __cunit_absolute_clip(src_path) :
-												__cunit_relative_clip(src_path);
+	return !src_path ? "(nil)" : __cunit_is_absolute_path(src_path) ? __cunit_absolute_clip(src_path) : __cunit_relative_clip(src_path);
 }
 
 #undef cunit_root_path
@@ -349,9 +338,7 @@ const char *__cunit_relative(const char *src_path) {
 #undef cunit_build_length
 
 #else
-const char *__cunit_relative(const char *src_path) {
-	return !src_path ? "(nil)" : src_path;
-}
+const char *__cunit_relative(const char *src_path) { return !src_path ? "(nil)" : src_path; }
 #endif
 
 void __cunit_pass(const cunit_context_t ctx) {
@@ -366,13 +353,97 @@ void __cunit_fatal(const cunit_context_t ctx) {
 	exit(EXIT_FAILURE);
 }
 
-void cunit_any_print(const cunit_any_t *self) {
+bool __cunit_check_str(const cunit_context_t ctx, const char *l, const char *r, bool equal, const char *format, ...) {
+	const bool is_str_equal = (l == r) || (l && r && !CUNIT_STRCMP(l, r));
+	if (is_str_equal == equal) { return true; }
+
+	__cunit_print_not_expected(ctx);
+	printf("%s %s %s" STR_NEWLINE, l, equal ? "!=" : "==", r);
+	__cunit_print_info(ctx, format);
+	return false;
+}
+
+bool __cunit_check_str_n(const cunit_context_t ctx, const char *l, const char *r, size_t size, const char *format, ...) {
+	if (l == r) { return true; }
+	if (l && r && !CUNIT_STRNCMP(l, r, size)) { return true; }
+
+	__cunit_print_not_expected(ctx);
+	printf("%s != %s" STR_NEWLINE, l, r);
+	__cunit_print_info(ctx, format);
+	return false;
+}
+
+bool __cunit_check_str_case(const cunit_context_t ctx, const char *l, const char *r, const char *format, ...) {
+	if (l == r) { return true; }
+	if (l && r && !CUNIT_STRCASECMP(l, r)) { return true; }
+
+	__cunit_print_not_expected(ctx);
+	printf("%s != %s" STR_NEWLINE, l, r);
+	__cunit_print_info(ctx, format);
+	return false;
+}
+
+bool __cunit_check_str_hex(const cunit_context_t ctx, const uint8_t *l, const uint8_t *r, size_t size, const char *format, ...) {
+	if (l == r) { return true; }
+	if (l && r && !__cunit_bytearray_compare(l, r, size)) { return true; }
+
+	__cunit_print_not_expected(ctx);
+	fputs("`", stdout);
+	__cunit_print_hex(l, size);
+	fputs("` != `", stdout);
+	__cunit_print_hex(r, size);
+	fputs("` " STR_NEWLINE, stdout);
+	__cunit_print_info(ctx, format);
+	return false;
+}
+
+bool __cunit_check_null(const cunit_context_t ctx, const void *p, const char *format, ...) {
+	if (!p) { return true; }
+
+	__cunit_print_not_expected(ctx);
+	printf("%p is not null" STR_NEWLINE, p);
+	__cunit_print_info(ctx, format);
+	return false;
+}
+
+bool __cunit_check_not_null(const cunit_context_t ctx, const void *p, const char *format, ...) {
+	if (p) { return true; }
+
+	__cunit_print_not_expected(ctx);
+	fputs("(null) is null" STR_NEWLINE, stdout);
+	__cunit_print_info(ctx, format);
+	return false;
+}
+
+bool __cunit_check_any_in_array(const cunit_context_t ctx, const cunit_value_t value, const void *array, size_t size, const char *format, ...) {
+	if (__cunit_check_any_is_in_array(value, array, size)) { return true; }
+
+	__cunit_print_not_expected(ctx);
+	__cunit_value_print(&value);
+	fputs(" is not in array" STR_NEWLINE, stdout);
+	__cunit_print_info(ctx, format);
+	return false;
+}
+
+bool __cunit_check_any_not_in_array(const cunit_context_t ctx, const cunit_value_t value, const void *array, size_t size, const char *format, ...) {
+	if (!__cunit_check_any_is_in_array(value, array, size)) { return true; }
+
+	__cunit_print_not_expected(ctx);
+	__cunit_value_print(&value);
+	fputs(" is in array" STR_NEWLINE, stdout);
+	__cunit_print_info(ctx, format);
+	return false;
+}
+
+// -------------------------[STATIC DEFINITION]-------------------------
+
+static inline void __cunit_value_print(const cunit_value_t *self) {
 	switch (self->type) {
-		case CUnitType_Bool: fputs((self->d.b) ? "true" : "false", stdout); break;
-		case CUnitType_Char: putchar(self->d.c); break;
-		case CUnitType_Float32: printf("%f", self->d.f32); break;
-		case CUnitType_Float64: printf("%f", self->d.f64); break;
-		case CUnitType_String: fputs(self->d.str ? self->d.str : "(null)", stdout); break;
+		case CUnitType_Bool: __cunit_print_bool(self->d.b); break;
+		case CUnitType_Char: __cunit_print_char(self->d.c); break;
+		case CUnitType_Float32: __cunit_print_f32(self->d.f32); break;
+		case CUnitType_Float64: __cunit_print_f64(self->d.f64); break;
+		case CUnitType_String: __cunit_print_str(self->d.str); break;
 		case CUnitType_Pointer: __cunit_print_ptr(self->d.ptr); break;
 		case CUnitType_Int: __cunit_print_i64(self->d.i); break;
 		case CUnitType_Int8: __cunit_print_i64(self->d.i8); break;
@@ -389,23 +460,13 @@ void cunit_any_print(const cunit_any_t *self) {
 	}
 }
 
-int cunit_any_compare(const cunit_any_t *l, const cunit_any_t *r) {
-	if (l->type != r->type) {
-		return -2;
-	}
+static inline int __cunit_value_compare(const cunit_value_t *l, const cunit_value_t *r) {
+	if (l->type != r->type) { return -2; }
 	switch (l->type) {
 		case CUnitType_Bool: return (l->d.b > r->d.b) - (l->d.b < r->d.b);
 		case CUnitType_Char: return (l->d.c > r->d.c) - (l->d.c < r->d.c);
-		case CUnitType_Float32:
-			return isnan(l->d.f32)                             ? isnan(r->d.f32) ? 0 : -1 :
-				   isnan(r->d.f32)                             ? 1 :
-				   (fabsf(l->d.f32 - r->d.f32) <= FLT_EPSILON) ? 0 :
-																 (l->d.f32 > r->d.f32) - (l->d.f32 < r->d.f32);
-		case CUnitType_Float64:
-			return isnan(l->d.f64)                            ? isnan(r->d.f64) ? 0 : -1 :
-				   isnan(r->d.f64)                            ? 1 :
-				   (fabs(l->d.f64 - r->d.f64) <= DBL_EPSILON) ? 0 :
-																(l->d.f64 > r->d.f64) - (l->d.f64 < r->d.f64);
+		case CUnitType_Float32: return CUNIT_FLOAT32_COMPARE(l->d.f32, r->d.f32);
+		case CUnitType_Float64: return CUNIT_FLOAT64_COMPARE(l->d.f64, r->d.f64);
 		case CUnitType_String: return CUNIT_STRCMP(l->d.str, r->d.str);
 		case CUnitType_Pointer: return (l->d.ptr > r->d.ptr) - (l->d.ptr < r->d.ptr);
 		case CUnitType_Int: return (l->d.i > r->d.i) - (l->d.i < r->d.i);
@@ -423,158 +484,15 @@ int cunit_any_compare(const cunit_any_t *l, const cunit_any_t *r) {
 	}
 }
 
-void cunit_any_swap(cunit_any_t *l, cunit_any_t *r) {
-	l->d.u64 ^= r->d.u64;
-	r->d.u64 ^= l->d.u64;
-	l->d.u64 ^= r->d.u64;
-	l->type ^= r->type;
-	r->type ^= l->type;
-	l->type ^= r->type;
-}
+static inline void __cunit_print_bool(bool b) { fputs(b ? "true" : "false", stdout); }
 
-bool __cunit_check_str(const cunit_context_t ctx, const char *l, const char *r, bool equal, const char *format, ...) {
-	const bool is_str_equal = (l == r) || (l && r && !CUNIT_STRCMP(l, r));
-	if (is_str_equal == equal) {
-		return true;
-	}
+static inline void __cunit_print_char(char c) { putchar(c); }
 
-	__cunit_print_not_expected(ctx);
-	printf("%s %s %s" STR_NEWLINE, l, equal ? "!=" : "==", r);
-	__cunit_print_info(format);
-	return false;
-}
+static inline void __cunit_print_f32(float f) { printf("%f", f); }
 
-bool __cunit_check_str_n(const cunit_context_t ctx, const char *l, const char *r, size_t size, const char *format,
-						 ...) {
-	if (l == r) {
-		return true;
-	}
-	if (l && r && !CUNIT_STRNCMP(l, r, size)) {
-		return true;
-	}
+static inline void __cunit_print_f64(double f) { printf("%f", f); }
 
-	__cunit_print_not_expected(ctx);
-	printf("%s != %s" STR_NEWLINE, l, r);
-	__cunit_print_info(format);
-	return false;
-}
-
-bool __cunit_check_str_case(const cunit_context_t ctx, const char *l, const char *r, const char *format, ...) {
-	if (l == r) {
-		return true;
-	}
-	if (l && r && !CUNIT_STRCASECMP(l, r)) {
-		return true;
-	}
-
-	__cunit_print_not_expected(ctx);
-	printf("%s != %s" STR_NEWLINE, l, r);
-	__cunit_print_info(format);
-	return false;
-}
-
-bool __cunit_check_str_hex(const cunit_context_t ctx, const uint8_t *l, const uint8_t *r, size_t size,
-						   const char *format, ...) {
-	if (l == r) {
-		return true;
-	}
-	if (l && r && !__cunit_bytearray_compare(l, r, size)) {
-		return true;
-	}
-
-	__cunit_print_not_expected(ctx);
-	fputs("`", stdout);
-	__cunit_print_hex(l, size);
-	fputs("` != `", stdout);
-	__cunit_print_hex(r, size);
-	fputs("` " STR_NEWLINE, stdout);
-	__cunit_print_info(format);
-	return false;
-}
-
-bool __cunit_check_null(const cunit_context_t ctx, const void *p, const char *format, ...) {
-	if (!p) {
-		return true;
-	}
-
-	__cunit_print_not_expected(ctx);
-	printf("%p is not null" STR_NEWLINE, p);
-	__cunit_print_info(format);
-	return false;
-}
-
-bool __cunit_check_not_null(const cunit_context_t ctx, const void *p, const char *format, ...) {
-	if (p) {
-		return true;
-	}
-
-	__cunit_print_not_expected(ctx);
-	fputs("(null) is null" STR_NEWLINE, stdout);
-	__cunit_print_info(format);
-	return false;
-}
-
-bool __cunit_check_any_compare(const cunit_context_t ctx, const cunit_any_t l, const cunit_any_t r, int cond,
-							   const char *format, ...) {
-	const enum cunit_compare_result ret = cunit_any_compare(&l, &r);
-
-	switch (ret) {
-		case CUnitCompare_Less:
-			if (cond & CUnit_Less) {
-				return true;
-			}
-			break;
-		case CUnitCompare_Equal:
-			if (cond & CUnit_Equal) {
-				return true;
-			}
-			break;
-		case CUnitCompare_Greater:
-			if (cond & CUnit_Greater) {
-				return true;
-			}
-			break;
-		default: break;
-	}
-
-	__cunit_print_not_expected(ctx);
-	cunit_any_print(&l);
-	fputs(" ", stdout);
-	fputs(CUNIT_COMPARE_RESULT_TO_STR(ret), stdout);
-	fputs(" ", stdout);
-	cunit_any_print(&r);
-	fputs(STR_NEWLINE, stdout);
-	__cunit_print_info(format);
-	return false;
-}
-
-bool __cunit_check_any_in_array(const cunit_context_t ctx, const cunit_any_t var, const void *array, size_t size,
-								const char *format, ...) {
-	if (__cunit_check_any_is_in_array(var, array, size)) {
-		return true;
-	}
-
-	__cunit_print_not_expected(ctx);
-	cunit_any_print(&var);
-	fputs(" is not in array" STR_NEWLINE, stdout);
-	__cunit_print_info(format);
-	return false;
-}
-
-bool __cunit_check_any_not_in_array(const cunit_context_t ctx, const cunit_any_t var, const void *array, size_t size,
-									const char *format, ...) {
-	if (!__cunit_check_any_is_in_array(var, array, size)) {
-		return true;
-	}
-
-	__cunit_print_not_expected(ctx);
-	cunit_any_print(&var);
-	fputs(" is in array" STR_NEWLINE, stdout);
-	__cunit_print_info(format);
-	return false;
-}
-
-// -------------------------[STATIC DEFINITION]-------------------------
+static inline void __cunit_print_str(const char *str) { fputs(str ? str : "(null)", stdout); }
 
 static inline void __cunit_print_u64(uint64_t n) {
 	// Buffer large enough for 20 digits of uint64_t + null terminator
@@ -637,140 +555,101 @@ static inline void __cunit_print_ptr(const void *p) {
 
 static inline int __cunit_bytearray_compare(const uint8_t *l, const uint8_t *r, size_t size) {
 	for (size_t i = 0; i < size; i++) {
-		if (l[i] != r[i]) {
-			return (l[i] > r[i]) - (l[i] < r[i]);
-		}
+		if (l[i] != r[i]) { return (l[i] > r[i]) - (l[i] < r[i]); }
 	}
 	return 0;
 }
 
-static inline bool __cunit_check_any_is_in_array(const cunit_any_t var, const void *array, size_t size) {
-	switch (var.type) {
+static inline bool __cunit_check_any_is_in_array(const cunit_value_t value, const void *array, size_t size) {
+	switch (value.type) {
 		case CUnitType_Bool:
 			for (size_t i = 0; i < size; i++) {
-				if (((const bool *)array)[i] == var.d.b) {
-					return true;
-				}
+				if (((const bool *)array)[i] == value.d.b) { return true; }
 			}
 			return false;
 		case CUnitType_Char:
 			for (size_t i = 0; i < size; i++) {
-				if (((const char *)array)[i] == var.d.c) {
-					return true;
-				}
+				if (((const char *)array)[i] == value.d.c) { return true; }
 			}
 			return false;
 		case CUnitType_Int:
 			for (size_t i = 0; i < size; i++) {
-				if (((const int *)array)[i] == var.d.i) {
-					return true;
-				}
+				if (((const int *)array)[i] == value.d.i) { return true; }
 			}
 			return false;
 		case CUnitType_Int8:
 			for (size_t i = 0; i < size; i++) {
-				if (((const int8_t *)array)[i] == var.d.i8) {
-					return true;
-				}
+				if (((const int8_t *)array)[i] == value.d.i8) { return true; }
 			}
 			return false;
 		case CUnitType_Int16:
 			for (size_t i = 0; i < size; i++) {
-				if (((const int16_t *)array)[i] == var.d.i16) {
-					return true;
-				}
+				if (((const int16_t *)array)[i] == value.d.i16) { return true; }
 			}
 			return false;
 		case CUnitType_Int32:
 			for (size_t i = 0; i < size; i++) {
-				if (((const int32_t *)array)[i] == var.d.i32) {
-					return true;
-				}
+				if (((const int32_t *)array)[i] == value.d.i32) { return true; }
 			}
 			return false;
 		case CUnitType_Int64:
 			for (size_t i = 0; i < size; i++) {
-				if (((const int64_t *)array)[i] == var.d.i64) {
-					return true;
-				}
+				if (((const int64_t *)array)[i] == value.d.i64) { return true; }
 			}
 			return false;
 		case CUnitType_Uint:
 			for (size_t i = 0; i < size; i++) {
-				if (((const unsigned int *)array)[i] == var.d.u) {
-					return true;
-				}
+				if (((const unsigned int *)array)[i] == value.d.u) { return true; }
 			}
 			return false;
 		case CUnitType_Uint8:
 			for (size_t i = 0; i < size; i++) {
-				if (((const uint8_t *)array)[i] == var.d.u8) {
-					return true;
-				}
+				if (((const uint8_t *)array)[i] == value.d.u8) { return true; }
 			}
 			return false;
 		case CUnitType_Uint16:
 			for (size_t i = 0; i < size; i++) {
-				if (((const uint16_t *)array)[i] == var.d.u16) {
-					return true;
-				}
+				if (((const uint16_t *)array)[i] == value.d.u16) { return true; }
 			}
 			return false;
 		case CUnitType_Uint32:
 			for (size_t i = 0; i < size; i++) {
-				if (((const uint32_t *)array)[i] == var.d.u32) {
-					return true;
-				}
+				if (((const uint32_t *)array)[i] == value.d.u32) { return true; }
 			}
 			return false;
 		case CUnitType_Uint64:
 			for (size_t i = 0; i < size; i++) {
-				if (((const uint64_t *)array)[i] == var.d.u64) {
-					return true;
-				}
+				if (((const uint64_t *)array)[i] == value.d.u64) { return true; }
 			}
 			return false;
 		case CUnitType_Float32:
 			for (size_t i = 0; i < size; i++) {
-				const float value = ((const float *)array)[i];
-				if (isnan(value)) {
-					if (isnan(var.d.f32)) {
-						return true;
-					}
+				const float it = ((const float *)array)[i];
+				if (isnan(it)) {
+					if (isnan(value.d.f32)) { return true; }
 					continue;
 				}
-				if (fabsf(value - var.d.f32) <= FLT_EPSILON) {
-					return true;
-				}
+				if (fabsf(it - value.d.f32) <= FLT_EPSILON) { return true; }
 			}
 			return false;
 		case CUnitType_Float64:
 			for (size_t i = 0; i < size; i++) {
-				const double value = ((const double *)array)[i];
-				if (isnan(value)) {
-					if (isnan(var.d.f64)) {
-						return true;
-					}
+				const double it = ((const double *)array)[i];
+				if (isnan(it)) {
+					if (isnan(value.d.f64)) { return true; }
 					continue;
 				}
-				if (fabs(value - var.d.f64) <= DBL_EPSILON) {
-					return true;
-				}
+				if (fabs(it - value.d.f64) <= DBL_EPSILON) { return true; }
 			}
 			return false;
 		case CUnitType_String:
 			for (size_t i = 0; i < size; i++) {
-				if (((const char *const *)array)[i] == var.d.str ||
-					CUNIT_STRCMP(((const char *const *)array)[i], var.d.str) == 0) {
-					return true;
-				}
+				if (((const char *const *)array)[i] == value.d.str || CUNIT_STRCMP(((const char *const *)array)[i], value.d.str) == 0) { return true; }
 			}
 			return false;
 		case CUnitType_Pointer:
 			for (size_t i = 0; i < size; i++) {
-				if (((const void *const *)array)[i] == var.d.ptr) {
-					return true;
-				}
+				if (((const void *const *)array)[i] == value.d.ptr) { return true; }
 			}
 			return false;
 		default: return true;
@@ -788,9 +667,109 @@ static inline void __cunit_print_hex(const uint8_t *array, size_t length) {
 			printf("%02X ", *array++);
 			continue;
 		}
-		if (length == 0) {
-			printf("%02X", *array++);
-		}
+		if (length == 0) { printf("%02X", *array++); }
 		break;
 	}
+}
+
+// -------------------------[TYPE-SPECIFIC ASSERTION FUNCTIONS]-------------------------
+
+#define __cunit_process_compare_result(result, cond, print_l, print_r) \
+	do {                                                               \
+		switch (result) {                                              \
+			case CUnitCompare_Less:                                    \
+				if (cond & CUnit_Less) { return true; }                \
+				break;                                                 \
+			case CUnitCompare_Equal:                                   \
+				if (cond & CUnit_Equal) { return true; }               \
+				break;                                                 \
+			case CUnitCompare_Greater:                                 \
+				if (cond & CUnit_Greater) { return true; }             \
+				break;                                                 \
+			default: break;                                            \
+		}                                                              \
+		__cunit_print_not_expected(ctx);                               \
+		print_l;                                                       \
+		fputs(" ", stdout);                                            \
+		fputs(CUNIT_COMPARE_RESULT_TO_STR(result), stdout);            \
+		fputs(" ", stdout);                                            \
+		print_r;                                                       \
+		fputs(STR_NEWLINE, stdout);                                    \
+		__cunit_print_info(ctx, format);                               \
+		return false;                                                  \
+	} while (0)
+
+bool __cunit_compare_bool(const cunit_context_t ctx, bool l, bool r, int cond, const char *format, ...) {
+	const enum cunit_compare_result result = (l > r) - (l < r);
+	__cunit_process_compare_result(result, cond, { __cunit_print_bool(l); }, { __cunit_print_bool(r); });
+}
+
+bool __cunit_compare_char(const cunit_context_t ctx, char l, char r, int cond, const char *format, ...) {
+	const enum cunit_compare_result result = (l > r) - (l < r);
+	__cunit_process_compare_result(result, cond, { __cunit_print_char(l); }, { __cunit_print_char(r); });
+}
+
+bool __cunit_compare_int(const cunit_context_t ctx, int l, int r, int cond, const char *format, ...) {
+	const enum cunit_compare_result result = (l > r) - (l < r);
+	__cunit_process_compare_result(result, cond, { __cunit_print_i64(l); }, { __cunit_print_i64(r); });
+}
+
+bool __cunit_compare_int8(const cunit_context_t ctx, int8_t l, int8_t r, int cond, const char *format, ...) {
+	const enum cunit_compare_result result = (l > r) - (l < r);
+	__cunit_process_compare_result(result, cond, { __cunit_print_i64(l); }, { __cunit_print_i64(r); });
+}
+
+bool __cunit_compare_int16(const cunit_context_t ctx, int16_t l, int16_t r, int cond, const char *format, ...) {
+	const enum cunit_compare_result result = (l > r) - (l < r);
+	__cunit_process_compare_result(result, cond, { __cunit_print_i64(l); }, { __cunit_print_i64(r); });
+}
+
+bool __cunit_compare_int32(const cunit_context_t ctx, int32_t l, int32_t r, int cond, const char *format, ...) {
+	const enum cunit_compare_result result = (l > r) - (l < r);
+	__cunit_process_compare_result(result, cond, { __cunit_print_i64(l); }, { __cunit_print_i64(r); });
+}
+
+bool __cunit_compare_int64(const cunit_context_t ctx, int64_t l, int64_t r, int cond, const char *format, ...) {
+	const enum cunit_compare_result result = (l > r) - (l < r);
+	__cunit_process_compare_result(result, cond, { __cunit_print_i64(l); }, { __cunit_print_i64(r); });
+}
+
+bool __cunit_compare_uint(const cunit_context_t ctx, unsigned l, unsigned r, int cond, const char *format, ...) {
+	const enum cunit_compare_result result = (l > r) - (l < r);
+	__cunit_process_compare_result(result, cond, { __cunit_print_u64(l); }, { __cunit_print_u64(r); });
+}
+
+bool __cunit_compare_uint8(const cunit_context_t ctx, uint8_t l, uint8_t r, int cond, const char *format, ...) {
+	const enum cunit_compare_result result = (l > r) - (l < r);
+	__cunit_process_compare_result(result, cond, { __cunit_print_u64(l); }, { __cunit_print_u64(r); });
+}
+
+bool __cunit_compare_uint16(const cunit_context_t ctx, uint16_t l, uint16_t r, int cond, const char *format, ...) {
+	const enum cunit_compare_result result = (l > r) - (l < r);
+	__cunit_process_compare_result(result, cond, { __cunit_print_u64(l); }, { __cunit_print_u64(r); });
+}
+
+bool __cunit_compare_uint32(const cunit_context_t ctx, uint32_t l, uint32_t r, int cond, const char *format, ...) {
+	const enum cunit_compare_result result = (l > r) - (l < r);
+	__cunit_process_compare_result(result, cond, { __cunit_print_u64(l); }, { __cunit_print_u64(r); });
+}
+
+bool __cunit_compare_uint64(const cunit_context_t ctx, uint64_t l, uint64_t r, int cond, const char *format, ...) {
+	const enum cunit_compare_result result = (l > r) - (l < r);
+	__cunit_process_compare_result(result, cond, { __cunit_print_u64(l); }, { __cunit_print_u64(r); });
+}
+
+bool __cunit_compare_float(const cunit_context_t ctx, float l, float r, int cond, const char *format, ...) {
+	const enum cunit_compare_result result = CUNIT_FLOAT32_COMPARE(l, r);
+	__cunit_process_compare_result(result, cond, { __cunit_print_f32(l); }, { __cunit_print_f32(r); });
+}
+
+bool __cunit_compare_double(const cunit_context_t ctx, double l, double r, int cond, const char *format, ...) {
+	const enum cunit_compare_result result = CUNIT_FLOAT64_COMPARE(l, r);
+	__cunit_process_compare_result(result, cond, { __cunit_print_f64(l); }, { __cunit_print_f64(r); });
+}
+
+bool __cunit_compare_ptr(const cunit_context_t ctx, const void *l, const void *r, int cond, const char *format, ...) {
+	const enum cunit_compare_result result = (l > r) - (l < r);
+	__cunit_process_compare_result(result, cond, { __cunit_print_ptr(l); }, { __cunit_print_ptr(r); });
 }

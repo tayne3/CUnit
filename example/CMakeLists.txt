@@ -1,6 +1,4 @@
-project(example C)
-
-file(GLOB_RECURSE files *.c)
+file(GLOB_RECURSE files *.c *.cpp)
 
 foreach(test_src ${files})
     get_filename_component(test_name ${test_src} NAME_WE)
@@ -11,6 +9,15 @@ endforeach(test_src)
 
 set_tests_properties(
     sample 
+        PROPERTIES 
+        PASS_REGULAR_EXPRESSION 
+        "passed"
+        FAIL_REGULAR_EXPRESSION 
+        "failed"
+)
+
+set_tests_properties(
+    sample_cpp
         PROPERTIES 
         PASS_REGULAR_EXPRESSION 
         "passed"

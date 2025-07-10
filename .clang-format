@@ -31,11 +31,11 @@ AllowShortCaseLabelsOnASingleLine: true
 # 允许短的函数放在同一行:
 #   None(无), InlineOnly(定义在类中), Empty(空函数),
 #   Inline(定义在类中，空函数), All(所有函数)
-AllowShortFunctionsOnASingleLine: Inline
+AllowShortFunctionsOnASingleLine: All
 # 允许短的if语句保持在同一行
-AllowShortIfStatementsOnASingleLine: false
+AllowShortIfStatementsOnASingleLine: true
 # 允许短的循环保持在同一行
-AllowShortLoopsOnASingleLine: false
+AllowShortLoopsOnASingleLine: true
 # 始终在定义返回类型后换行: 
 #   None(不在返回类型后自动换行), All(在所有函数定义的返回类型后换行)
 AlwaysBreakAfterDefinitionReturnType: None
@@ -93,7 +93,7 @@ BreakBeforeTernaryOperators: false
 # 在构造函数初始值列表的逗号前换行
 BreakConstructorInitializersBeforeComma: false
 # 每行字符的限制,默认80
-ColumnLimit: 120
+ColumnLimit: 160
 # 注释的正则表达式,用于确定哪些注释被解析为特殊注释命令
 CommentPragmas: "^ IWYU pragma:"
 # 构造函数初始值设定项:

@@ -138,18 +138,12 @@ int main(void) {
 	check_false(0 == 0, "check true: 0 == 0");
 	check_true(0 != 0, "check true: 0 != 0");
 
-	if (check_bool(true, true)) {
-		cunit_println("check bool: true == true");
-	}
-	if (!check_bool(true, false)) {
-		cunit_println("check bool: true != false");
-	}
+	if (check_bool(true, true)) { cunit_println("check bool: true == true"); }
+	if (!check_bool(true, false)) { cunit_println("check bool: true != false"); }
 
 	check_char('a', 'b', "check char: 'a' != 'b'");
 
-	if (check_char('a', 'a')) {
-		cunit_println("check char: 'a' == 'a'");
-	}
+	if (check_char('a', 'a')) { cunit_println("check char: 'a' == 'a'"); }
 
 	check_int_eq(0, 0);
 	check_int_eq(0, -1);
