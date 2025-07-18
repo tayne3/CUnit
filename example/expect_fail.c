@@ -1,8 +1,15 @@
 #include "cunit.h"
 
-int main(void) {
+void test_assertions(void) {
 	check_false(true);
 	assert_not_null(NULL);
+}
 
-	cunit_pass();
+int main(void) {
+	cunit_init();
+
+	cunit_add_test_suite("Assertion Tests", NULL, NULL);
+	cunit_add_test("All Assertions", test_assertions);
+
+	return cunit_run();
 }

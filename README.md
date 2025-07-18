@@ -99,12 +99,17 @@ int add(int a, int b) {
     return a + b;
 }
 
-int main(void) {
+void test_add(void) {
     assert_int_eq(add(2, 2), 4);
     assert_true(add(0, 0) == 0, "test add(0,0) == 0");
     assert_false(add(1, 2) == 4, "test add(1,2) != 4");
+}
 
-    cunit_pass();
+int main(void) {
+    cunit_init();
+    cunit_add_test_suite("Assertion Tests", NULL, NULL);
+    cunit_add_test("test add", test_add);
+    return cunit_run();
 }
 ```
 

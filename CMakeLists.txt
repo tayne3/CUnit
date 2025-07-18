@@ -16,7 +16,6 @@ target_include_directories(${PROJECT_NAME} PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/in
 
 add_library(${PROJECT_NAME}::${PROJECT_NAME} ALIAS ${PROJECT_NAME})
 add_library(${PROJECT_NAME}::${PROJECT_LIB_NAME} ALIAS ${PROJECT_NAME})
-message(STATUS "${PROJECT_NAME} ${PROJECT_VERSION} ${PROJECT_LIB_NAME} library")
 
 if(CUNIT_BUILD_EXAMPLE)
     enable_testing()

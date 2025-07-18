@@ -1,6 +1,6 @@
 #include "cunit.h"
 
-int main(void) {
+void test_assertions(void) {
 	assert_bool(true, true);
 	assert_bool(false, false);
 	assert_true(1 > 0);
@@ -180,6 +180,13 @@ int main(void) {
 
 		check_in_array(CUNIT_VALUE_INT(7), array, array_size);
 	}
+}
 
-	cunit_pass();
+int main(void) {
+	cunit_init();
+
+	cunit_add_test_suite("Assertion Tests", NULL, NULL);
+	cunit_add_test("All Assertions", test_assertions);
+
+	return cunit_run();
 }

@@ -21,9 +21,20 @@
  *    OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  *    SOFTWARE.
  */
-#include "cunit/assert.h"
-#include "cunit/compare.h"
-#include "cunit/ctx.h"
+#ifndef CUNIT_INTT_H
+#define CUNIT_INTT_H
+
 #include "cunit/def.h"
-#include "cunit/suite.h"
-#include "cunit/value.h"
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+void __cunit_relative_initialization(void);
+void __cunit_init(void);
+
+#ifdef __cplusplus
+}
+#endif
+
+#endif  // CUNIT_INTT_H
