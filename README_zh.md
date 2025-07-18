@@ -5,21 +5,21 @@
 [![Tag](https://img.shields.io/github/v/tag/tayne3/cunit?color=%23ff8936&style=flat-square&logo=git&logoColor=white)](https://github.com/tayne3/cunit/tags)
 [![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/tayne3/cunit)
 
-**English** | [中文](README_zh.md)
+[English](README.md) | **中文**
 
-**A modern, lightweight, and professional C unit testing framework designed for simplicity and elegance.**
+**现代化、轻量级的 C 语言单元测试框架。**
 
-cunit provides a clean, structured API for writing and organizing unit tests in C, with both modern macro-based syntax and traditional function calls for maximum flexibility.
+cunit 提供了清晰、结构化的 API 来编写和组织 C 语言单元测试，既支持现代的宏语法，也支持传统的函数调用，最大化灵活性。
 
-## ✨ Key Features
+## ✨ 核心特性
 
-- **🏗️ Structured API**: Modern macro-based syntax with `CUNIT_SUITE_BEGIN`/`CUNIT_SUITE_END` blocks
-- **🚀 Easy Integration**: CMake support with FetchContent and CPM.cmake
-- **🎯 ANSI C99**: Standard-compliant code works everywhere
+- **🏗️ 结构化 API**: 现代宏语法，使用 `CUNIT_SUITE_BEGIN`/`CUNIT_SUITE_END` 代码块
+- **🚀 易于集成**: CMake 支持，兼容 FetchContent 和 CPM.cmake
+- **🎯 ANSI C99**: 标准兼容代码，适用于所有平台
 
-## 🚀 Quick Start
+## 🚀 快速开始
 
-### Basic Test Structure
+### 基础测试结构
 
 ```c
 #include "cunit.h"
@@ -50,7 +50,7 @@ int main(void) {
 }
 ```
 
-### Advanced Example with Setup/Teardown
+### 带有 Setup/Teardown 的高级示例
 
 ```c
 #include "cunit.h"
@@ -95,9 +95,9 @@ int main(void) {
 }
 ```
 
-## 🔧 Installation & Integration
+## 🔧 安装与集成
 
-### Method 1: CMake FetchContent
+### 方法 1: CMake FetchContent
 
 ```cmake
 cmake_minimum_required(VERSION 3.12)
@@ -111,16 +111,16 @@ FetchContent_Declare(
 )
 FetchContent_MakeAvailable(cunit)
 
-# Create your test executable
+# 创建测试可执行文件
 add_executable(my_tests test_main.c)
 target_link_libraries(my_tests PRIVATE cunit::cunit)
 
-# Enable testing
+# 启用测试
 enable_testing()
 add_test(NAME my_tests COMMAND my_tests)
 ```
 
-### Method 2: CPM.cmake
+### 方法 2: CPM.cmake
 
 ```cmake
 include(cmake/CPM.cmake)
@@ -130,7 +130,7 @@ add_executable(my_tests test_main.c)
 target_link_libraries(my_tests PRIVATE cunit::cunit)
 ```
 
-### Method 3: Manual Build
+### 方法 3: 手动构建
 
 ```bash
 git clone https://github.com/tayne3/cunit.git
@@ -140,38 +140,38 @@ cmake ..
 make
 ```
 
-## 📚 API Reference
+## 📚 API 参考
 
-### Core Functions
+### 核心函数
 
-| Function | Description |
-|----------|-------------|
-| `cunit_init()` | Initialize the framework |
-| `cunit_cleanup()` | Clean up resources |
-| `cunit_suite(name, setup, teardown)` | Create a test suite |
-| `cunit_test(name, func)` | Add a test to current suite |
-| `cunit_run()` | Run all tests |
-| `cunit_run_suite(name)` | Run specific suite |
+| 函数 | 描述 |
+|------|------|
+| `cunit_init()` | 初始化框架 |
+| `cunit_cleanup()` | 清理资源 |
+| `cunit_suite(name, setup, teardown)` | 创建测试套件 |
+| `cunit_test(name, func)` | 向当前套件添加测试 |
+| `cunit_run()` | 运行所有测试 |
+| `cunit_run_suite(name)` | 运行指定套件 |
 
-### Structured API (Recommended)
+### 结构化 API（推荐）
 
-| Macro | Description |
-|-------|-------------|
-| `CUNIT_SUITE_BEGIN(name, setup, teardown)` | Begin suite definition |
-| `CUNIT_TEST(name, func)` | Add test to current suite |
-| `CUNIT_SUITE_END()` | End suite definition |
+| 宏 | 描述 |
+|----|------|
+| `CUNIT_SUITE_BEGIN(name, setup, teardown)` | 开始套件定义 |
+| `CUNIT_TEST(name, func)` | 向当前套件添加测试 |
+| `CUNIT_SUITE_END()` | 结束套件定义 |
 
-### Query Functions
+### 查询函数
 
-| Function | Description |
-|----------|-------------|
-| `cunit_test_count()` | Get total number of tests |
-| `cunit_failure_count()` | Get number of failed tests |
-| `cunit_suite_count()` | Get number of test suites |
+| 函数 | 描述 |
+|------|------|
+| `cunit_test_count()` | 获取测试总数 |
+| `cunit_failure_count()` | 获取失败测试数 |
+| `cunit_suite_count()` | 获取测试套件数 |
 
-### Assertion Macros
+### 断言宏
 
-#### Boolean Assertions
+#### 布尔断言
 
 ```c
 assert_true(condition);
@@ -179,27 +179,27 @@ assert_false(condition);
 assert_bool(expected, actual);
 ```
 
-#### Integer Assertions  
+#### 整数断言
 
 ```c
-assert_int_eq(expected, actual);
-assert_int_ne(expected, actual);
-assert_int_lt(expected, actual);
-assert_int_gt(expected, actual);
-assert_int_le(expected, actual);
-assert_int_ge(expected, actual);
+assert_int_eq(expected, actual);   // 等于
+assert_int_ne(expected, actual);   // 不等于
+assert_int_lt(expected, actual);   // 小于
+assert_int_gt(expected, actual);   // 大于
+assert_int_le(expected, actual);   // 小于等于
+assert_int_ge(expected, actual);   // 大于等于
 ```
 
-#### String Assertions
+#### 字符串断言
 
 ```c
-assert_str_eq(expected, actual);
-assert_str_ne(expected, actual);
-assert_str_case(expected, actual);  // Case-insensitive
-assert_str_n(expected, actual, n);  // First n characters
+assert_str_eq(expected, actual);     // 字符串相等
+assert_str_ne(expected, actual);     // 字符串不等
+assert_str_case(expected, actual);   // 忽略大小写比较
+assert_str_n(expected, actual, n);   // 前 n 个字符比较
 ```
 
-#### Pointer Assertions
+#### 指针断言
 
 ```c
 assert_ptr_eq(expected, actual);
@@ -208,10 +208,10 @@ assert_null(ptr);
 assert_not_null(ptr);
 ```
 
-#### Float Assertions
+#### 浮点数断言
 
 ```c
 assert_float32_eq(expected, actual);
 assert_float64_eq(expected, actual);
-// Also: _ne, _lt, _gt, _le, _ge variants
+// 同样有: _ne, _lt, _gt, _le, _ge 变种
 ```
