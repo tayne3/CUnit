@@ -7,29 +7,15 @@ foreach(test_src ${files})
     add_test(NAME ${test_name} COMMAND ${test_name})
 endforeach(test_src)
 
-set_tests_properties(
-    sample 
-        PROPERTIES 
-        PASS_REGULAR_EXPRESSION 
-        "passed"
-        FAIL_REGULAR_EXPRESSION 
-        "failed"
+set_tests_properties(sample PROPERTIES 
+    FAIL_REGULAR_EXPRESSION "failed"
 )
 
-set_tests_properties(
-    sample_cpp
-        PROPERTIES 
-        PASS_REGULAR_EXPRESSION 
-        "passed"
-        FAIL_REGULAR_EXPRESSION 
-        "failed"
+set_tests_properties(sample_cpp PROPERTIES 
+    FAIL_REGULAR_EXPRESSION "failed"
 )
 
-set_tests_properties(
-    expect_fail 
-        PROPERTIES 
-        PASS_REGULAR_EXPRESSION 
-        "failed"
-        FAIL_REGULAR_EXPRESSION 
-        "passed"
+set_tests_properties(expect_fail PROPERTIES 
+    PASS_REGULAR_EXPRESSION "failed"
+    FAIL_REGULAR_EXPRESSION "passed"
 )

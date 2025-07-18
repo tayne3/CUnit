@@ -185,8 +185,9 @@ void test_assertions(void) {
 int main(void) {
 	cunit_init();
 
-	cunit_add_test_suite("Assertion Tests", NULL, NULL);
-	cunit_add_test("All Assertions", test_assertions);
+	CUNIT_SUITE_BEGIN("Assertion Tests", NULL, NULL)
+	CUNIT_TEST("All Assertions", test_assertions)
+	CUNIT_SUITE_END()
 
 	return cunit_run();
 }
