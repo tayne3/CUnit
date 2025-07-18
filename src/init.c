@@ -53,7 +53,7 @@
 
 static int __cunit_build_level = -1;
 
-void __cunit_relative_initialization(void) {
+void cunit__internal_relative_init(void) {
 	if (STR_ISEMPTY(cunit_root_path) || cunit_build_length < cunit_root_length || strncmp(cunit_build_path, cunit_root_path, cunit_root_length) != 0) {
 		return;
 	}
@@ -97,7 +97,7 @@ static const char *__cunit_absolute_clip(const char *abs) {
 }
 
 static const char *__cunit_relative_clip(const char *rel) {
-	if (__cunit_build_level == -1) { __cunit_init(); }
+	if (__cunit_build_level == -1) { cunit__internal_init(); }
 
 	const char *p         = rel;
 	int         dot_count = 0, dir_level = __cunit_build_level;

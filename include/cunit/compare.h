@@ -24,8 +24,8 @@
 #ifndef CUNIT_COMPARE_H
 #define CUNIT_COMPARE_H
 
-#include "value.h"
 #include "ctx.h"
+#include "value.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -39,11 +39,11 @@ extern "C" {
 #define CUnit_GreaterEqual 0x05
 #define CUnit_NotEqual     0x06
 
-void __cunit_pass(const cunit_context_t ctx);
-void __cunit_fatal(const cunit_context_t ctx);
+void cunit__handle_pass(const cunit_context_t ctx);
+void cunit__handle_fail(const cunit_context_t ctx);
 
 void __cunit_value_print(const cunit_value_t *self);
-int __cunit_value_compare(const cunit_value_t *l, const cunit_value_t *r);
+int  __cunit_value_compare(const cunit_value_t *l, const cunit_value_t *r);
 
 bool __cunit_compare_bool(const cunit_context_t ctx, bool l, bool r, int cond, const char *format, ...);
 bool __cunit_compare_char(const cunit_context_t ctx, char l, char r, int cond, const char *format, ...);

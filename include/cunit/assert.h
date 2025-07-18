@@ -32,15 +32,15 @@ extern "C" {
 
 #define ___cunit_assert_check_1(__func, __1, ...)                         \
 	do {                                                                  \
-		if (!__func(__1, __VA_ARGS__)) { __cunit_fatal(CUNIT_CTX_CURR); } \
+		if (!__func(__1, __VA_ARGS__)) { cunit__handle_fail(CUNIT_CTX_CURR); } \
 	} while (0)
 #define ___cunit_assert_check_2(__func, __1, __2, ...)                         \
 	do {                                                                       \
-		if (!__func(__1, __2, __VA_ARGS__)) { __cunit_fatal(CUNIT_CTX_CURR); } \
+		if (!__func(__1, __2, __VA_ARGS__)) { cunit__handle_fail(CUNIT_CTX_CURR); } \
 	} while (0)
 #define ___cunit_assert_check_3(__func, __1, __2, __3, ...)                         \
 	do {                                                                            \
-		if (!__func(__1, __2, __3, __VA_ARGS__)) { __cunit_fatal(CUNIT_CTX_CURR); } \
+		if (!__func(__1, __2, __3, __VA_ARGS__)) { cunit__handle_fail(CUNIT_CTX_CURR); } \
 	} while (0)
 
 #define ___cunit_check_bool_compare(__l, __r, ...)           __cunit_compare_bool(CUNIT_CTX_CURR, (__l), (__r), CUnit_Equal, STR_NULL __VA_ARGS__)

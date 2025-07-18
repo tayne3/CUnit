@@ -30,8 +30,8 @@
 extern "C" {
 #endif
 
-void __cunit_relative_initialization(void);
-void __cunit_init(void);
+void cunit__internal_relative_init(void);
+void cunit__internal_init(void);
 
 #ifdef __cplusplus
 }
